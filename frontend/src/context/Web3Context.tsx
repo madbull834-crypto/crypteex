@@ -54,7 +54,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     const error = err as { code?: number; message?: string; info?: { error?: { message?: string } } };
     const detail = `${error?.message || ""} ${error?.info?.error?.message || ""}`.toLowerCase();
     if (detail.includes("must has at least one account") || detail.includes("must have at least one account")) {
-      return "MetaMask has no account. Create a wallet or import the local Hardhat test account, then connect again.";
+      return "MetaMask has no account selected. Create or import a wallet account, unlock MetaMask, then connect again.";
     }
     if (error?.code === 4001) return "Wallet request was rejected in MetaMask.";
     if (error?.code === -32002) return "A MetaMask request is already open. Open MetaMask and complete it.";
