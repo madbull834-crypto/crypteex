@@ -19,11 +19,30 @@ interface EthereumProvider {
   on: (event: string, handler: (...args: unknown[]) => void) => void;
   removeListener: (event: string, handler: (...args: unknown[]) => void) => void;
   isMetaMask?: boolean;
+  isRabby?: boolean;
+  isCoinbaseWallet?: boolean;
+  isBraveWallet?: boolean;
+  isOkxWallet?: boolean;
+  isTrust?: boolean;
   _metamask?: {
     isUnlocked?: () => Promise<boolean>;
   };
   providers?: EthereumProvider[];
 }
+
+interface EIP6963ProviderInfo {
+  uuid: string;
+  name: string;
+  icon: string;
+  rdns: string;
+}
+
+interface EIP6963ProviderDetail {
+  info: EIP6963ProviderInfo;
+  provider: EthereumProvider;
+}
+
+type EIP6963AnnounceProviderEvent = CustomEvent<EIP6963ProviderDetail>;
 
 interface Window {
   ethereum?: EthereumProvider;
