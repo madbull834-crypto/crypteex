@@ -1,0 +1,49 @@
+{
+  "name": "meta-crown-nft",
+  "version": "1.0.0",
+  "description": "Meta Crown NFT - Production Grade Smart Contract System",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:gas": "REPORT_GAS=true hardhat test",
+    "deploy": "hardhat run scripts/deploy.ts --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
+    "deploy:bsc": "hardhat run scripts/deploy.ts --network bsc",
+    "node": "hardhat node",
+    "flatten": "hardhat flatten contracts/MetaCrownNFT.sol > flattened/MetaCrownNFT.flat.sol"
+  },
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "hardhat",
+    "nft",
+    "rewards"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
+    "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.1.0",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.10.6",
+    "chai": "^4.3.10",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.1",
+    "hardhat": "^2.19.4",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solidity-coverage": "^0.8.5",
+    "ts-node": "^10.9.2",
+    "typechain": "^8.3.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.1"
+  }
+}

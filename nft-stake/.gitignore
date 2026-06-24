@@ -1,0 +1,17 @@
+node_modules/
+dist/
+artifacts/
+cache/
+typechain-types/
+.env
+.env.local
+.env.*.local
+coverage/
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+flattened/
+coverage.json

@@ -1,0 +1,49 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build artifacts
+artifacts/
+cache/
+dist/
+build/
+
+# TypeChain generated files
+typechain-types/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test coverage
+coverage/
+coverage.json
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Hardhat
+hardhat-errors/
+
+# Temporary
+tmp/
+temp/
+*.tmp
