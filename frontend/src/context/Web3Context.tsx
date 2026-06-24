@@ -29,7 +29,10 @@ interface Web3State {
   isConnecting: boolean;
   walletError: string | null;
   isWrongNetwork: boolean;
-  connect: () => Promise<void>;
+  walletOptions: { id: string; name: string }[];
+  selectedWalletId: string | null;
+  selectWallet: (walletId: string) => void;
+  connect: (walletId?: string) => Promise<void>;
   disconnect: () => void;
   switchNetwork: () => Promise<void>;
   ecosystem: Contract | null;
@@ -89,6 +92,16 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   const [wallets, setWallets] = useState<InjectedWallet[]>([]);
   const [activeWallet, setActiveWallet] = useState<InjectedWallet | null>(null);
 
+  const walletOptions = useMemo(
+    () => wallets.map((wallet) => ({ id: wallet.id, name: wallet.name })),
+    [wallets]
+  );
+
+  const selectWallet = useCallback((walletId: string) => {
+    const wallet = wallets.find((candidate) => candidate.id === walletId);
+    if (wallet) setActiveWallet(wallet);
+  }, [wallets]);
+
   const providerErrorMessage = (err: unknown) => {
     const error = err as { code?: number; message?: string; info?: { error?: { message?: string } } };
     const detail = `${error?.message || ""} ${error?.info?.error?.message || ""}`.toLowerCase();
@@ -147,8 +160,12 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     setAccount(await activeSigner.getAddress());
   }, []);
 
-  const connect = useCallback(async () => {
-    const wallet = activeWallet ?? wallets[0] ?? legacyInjectedWallets()[0];
+  const connect = useCallback(async (walletId?: string) => {
+    const wallet =
+      (walletId ? wallets.find((candidate) => candidate.id === walletId) : undefined) ??
+      activeWallet ??
+      wallets[0] ??
+      legacyInjectedWallets()[0];
     const injectedProvider = wallet?.provider;
     if (!wallet || !injectedProvider) {
       setWalletError("No browser wallet was detected. Install MetaMask, Rabby, Coinbase Wallet, OKX Wallet, or another injected EVM wallet.");
@@ -305,6 +322,9 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     isConnecting,
     walletError,
     isWrongNetwork,
+    walletOptions,
+    selectedWalletId: activeWallet?.id ?? wallets[0]?.id ?? null,
+    selectWallet,
     connect,
     disconnect,
     switchNetwork,

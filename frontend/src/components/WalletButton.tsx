@@ -3,13 +3,37 @@ import { shortenAddress } from "../utils/format";
 import { CHAIN_NAME } from "../config/contracts";
 
 export function WalletButton() {
-  const { account, isConnecting, walletError, isWrongNetwork, connect, disconnect, switchNetwork } = useWeb3();
+  const {
+    account,
+    isConnecting,
+    walletError,
+    isWrongNetwork,
+    walletOptions,
+    selectedWalletId,
+    selectWallet,
+    connect,
+    disconnect,
+    switchNetwork,
+  } = useWeb3();
 
   if (!account) {
     return (
       <div className="flex flex-col items-end gap-1">
+        {walletOptions.length > 1 && (
+          <select
+            value={selectedWalletId ?? ""}
+            onChange={(event) => selectWallet(event.target.value)}
+            className="max-w-44 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-xs text-neutral-700"
+          >
+            {walletOptions.map((wallet) => (
+              <option key={wallet.id} value={wallet.id}>
+                {wallet.name}
+              </option>
+            ))}
+          </select>
+        )}
         <button
-          onClick={connect}
+          onClick={() => connect(selectedWalletId ?? undefined)}
           disabled={isConnecting}
           className="rounded-lg bg-gradient-to-r from-amber-400 to-yellow-500 px-4 py-2 text-sm font-semibold text-neutral-900 shadow shadow-amber-300/50 transition hover:from-amber-300 hover:to-yellow-400 disabled:opacity-50"
         >

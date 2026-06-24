@@ -53,7 +53,7 @@ export function JoinStakeForm({
         <h3 className="text-lg font-semibold text-neutral-900">Join a Stake Package</h3>
         <p className="mt-2 text-sm text-neutral-600">Connect your wallet to stake USDT and start earning monthly ROI.</p>
         <button
-          onClick={connect}
+          onClick={() => connect()}
           className="mt-4 rounded-lg bg-gradient-to-r from-amber-400 to-yellow-500 px-4 py-2 text-sm font-semibold text-neutral-900 shadow shadow-amber-300/50 hover:from-amber-300 hover:to-yellow-400"
         >
           Connect Wallet

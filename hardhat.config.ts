@@ -62,6 +62,11 @@ const config: HardhatUserConfig = {
     outDir: "typechain-types",
     target: "ethers-v6",
   },
+  etherscan: {
+    // Etherscan API V2 uses one unified Etherscan API key across supported chains.
+    // Do not configure per-network API key objects; that makes hardhat-verify use deprecated V1 endpoints.
+    apiKey: process.env.ETHERSCAN_API_KEY || "",
+  },
 };
 
 export default config;

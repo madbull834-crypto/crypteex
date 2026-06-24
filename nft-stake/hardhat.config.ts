@@ -74,11 +74,9 @@ const config: HardhatUserConfig = {
     target: "ethers-v6",
   },
   etherscan: {
-    apiKey: {
-      sepolia: process.env.ETHERSCAN_API_KEY || "",
-      bsc: process.env.BSCSCAN_API_KEY || "",
-      bscTestnet: process.env.BSCSCAN_API_KEY || "",
-    },
+    // Etherscan API V2 uses one unified Etherscan API key across supported chains.
+    // Passing an object here makes hardhat-verify fall back to deprecated V1 explorer endpoints.
+    apiKey: process.env.ETHERSCAN_API_KEY || "",
     customChains: [
       {
         network: "bsc",

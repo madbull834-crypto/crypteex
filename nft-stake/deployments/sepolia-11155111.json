@@ -1,0 +1,26 @@
+{
+  "project": "Meta Crown NFT Stake Ecosystem",
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployedAt": "2026-06-24T15:18:24.984Z",
+  "deployer": "0x520c92Fc4a05A63B73a412ef0bc2aFdC47d05980",
+  "contracts": {
+    "usdt": "0x91619fF5438A42396c8A89faa54ce4a90Bc6007D",
+    "mockUSDT": true,
+    "ecosystem": "0x5f5f53d817aF01E887a2438994e64ba6F31aDc28",
+    "marketplace": "0x16577f70df6b4076c01B16944309F1211B2D390F"
+  },
+  "wallets": {
+    "treasury": "0x520c92Fc4a05A63B73a412ef0bc2aFdC47d05980",
+    "airdrop": "0x520c92Fc4a05A63B73a412ef0bc2aFdC47d05980"
+  },
+  "frontendEnv": {
+    "VITE_CHAIN_ID": "11155111",
+    "VITE_CHAIN_NAME": "sepolia",
+    "VITE_RPC_URL": "https://rpc.sepolia.org",
+    "VITE_BLOCK_EXPLORER": "https://sepolia.etherscan.io",
+    "VITE_USDT_ADDRESS": "0x91619fF5438A42396c8A89faa54ce4a90Bc6007D",
+    "VITE_STAKE_ECOSYSTEM_ADDRESS": "0x5f5f53d817aF01E887a2438994e64ba6F31aDc28",
+    "VITE_MARKETPLACE_ADDRESS": "0x16577f70df6b4076c01B16944309F1211B2D390F"
+  }
+}

@@ -75,7 +75,7 @@ export function NftListCard({
         <NftArt packageId={entry.packageId} tokenId={entry.tokenId} />
         <h3 className="text-lg font-semibold text-neutral-900">Crypteex {PACKAGE_NAMES[entry.packageId]}</h3>
         <button
-          onClick={connect}
+          onClick={() => connect()}
           className="rounded-lg bg-gradient-to-r from-amber-400 to-yellow-500 px-4 py-2 text-sm font-semibold text-neutral-900 hover:from-amber-300 hover:to-yellow-400"
         >
           Connect Wallet

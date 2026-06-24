@@ -10,6 +10,7 @@
     "deploy": "hardhat run scripts/deploy.ts --network localhost",
     "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
     "deploy:bsc": "hardhat run scripts/deploy.ts --network bsc",
+    "deploy:frontend:nginx": "bash scripts/deploy-frontend-nginx.sh",
     "node": "hardhat node",
     "flatten": "hardhat flatten contracts/MetaCrownNFT.sol > flattened/MetaCrownNFT.flat.sol"
   },

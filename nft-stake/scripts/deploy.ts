@@ -43,7 +43,7 @@ function explorerForChain(chainId: number): string {
   return "";
 }
 
-async function main() {
+export async function deployMetaCrown() {
   const [deployer] = await ethers.getSigners();
   const providerNetwork = await ethers.provider.getNetwork();
   const chainId = Number(providerNetwork.chainId);
@@ -149,7 +149,9 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  deployMetaCrown().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}

@@ -56,6 +56,14 @@ async function main() {
     );
   }
 
+  const code = await ethers.provider.getCode(ecosystemAddress);
+  if (code === "0x") {
+    throw new Error(
+      `No contract code found at STAKE_ECOSYSTEM_ADDRESS=${ecosystemAddress} on ${network.name}. ` +
+      "Use the deployed MetaCrownNFTStakeEcosystem address from deployments/<network>.latest.json, not the deployer wallet."
+    );
+  }
+
   const ecosystem = await ethers.getContractAt("MetaCrownNFTStakeEcosystem", ecosystemAddress, admin);
   const owner = await ecosystem.owner();
   if (owner.toLowerCase() !== admin.address.toLowerCase()) {

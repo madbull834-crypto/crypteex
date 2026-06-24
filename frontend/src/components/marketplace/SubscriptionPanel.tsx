@@ -27,7 +27,7 @@ export function SubscriptionPanel({
       <Card>
         <h2 className="text-xl font-semibold text-neutral-900">Choose Your Subscription</h2>
         <p className="mt-2 text-sm text-neutral-600">Connect your wallet before purchasing a category subscription.</p>
-        <button onClick={connect} className="mt-4 rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-neutral-900">
+        <button onClick={() => connect()} className="mt-4 rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-neutral-900">
           Connect Wallet
         </button>
       </Card>
