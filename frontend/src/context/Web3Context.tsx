@@ -61,6 +61,24 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     return error?.message || "MetaMask could not connect.";
   };
 
+  const requestWalletAccounts = async (browserProvider: BrowserProvider) => {
+    try {
+      await browserProvider.send("eth_requestAccounts", []);
+    } catch (err) {
+      const error = err as { message?: string; info?: { error?: { message?: string } } };
+      const detail = `${error?.message || ""} ${error?.info?.error?.message || ""}`.toLowerCase();
+      if (!detail.includes("must has at least one account") && !detail.includes("must have at least one account")) {
+        throw err;
+      }
+
+      await window.ethereum?.request({
+        method: "wallet_requestPermissions",
+        params: [{ eth_accounts: {} }],
+      });
+      await browserProvider.send("eth_requestAccounts", []);
+    }
+  };
+
   const refreshSigner = useCallback(async (browserProvider: BrowserProvider) => {
     const network = await browserProvider.getNetwork();
     setChainId(Number(network.chainId));
@@ -85,7 +103,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     setIsConnecting(true);
     try {
       const browserProvider = new BrowserProvider(window.ethereum, "any");
-      await browserProvider.send("eth_requestAccounts", []);
+      await requestWalletAccounts(browserProvider);
       const network = await browserProvider.getNetwork();
       if (Number(network.chainId) !== CHAIN_ID) {
         try {
