@@ -46,7 +46,11 @@ function getInjectedMetaMaskProvider() {
   const ethereum = window.ethereum;
   if (!ethereum) return undefined;
   if (ethereum.providers?.length) {
-    return ethereum.providers.find((provider) => provider.isMetaMask) ?? ethereum.providers[0];
+    return (
+      ethereum.providers.find((provider) => provider.isMetaMask && provider._metamask) ??
+      ethereum.providers.find((provider) => provider.isMetaMask) ??
+      ethereum.providers[0]
+    );
   }
   return ethereum;
 }
@@ -63,7 +67,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     const error = err as { code?: number; message?: string; info?: { error?: { message?: string } } };
     const detail = `${error?.message || ""} ${error?.info?.error?.message || ""}`.toLowerCase();
     if (detail.includes("must has at least one account") || detail.includes("must have at least one account")) {
-      return "No wallet account was exposed to this site. Unlock MetaMask, select an account for this website, and disable other wallet extensions if they are overriding MetaMask.";
+      return "MetaMask did not expose an account to this site. Open MetaMask, unlock it, click Connected sites, connect this domain, and select at least one account.";
     }
     if (error?.code === 4001) return "Wallet request was rejected in MetaMask.";
     if (error?.code === -32002) return "A MetaMask request is already open. Open MetaMask and complete it.";
@@ -71,20 +75,30 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   };
 
   const requestWalletAccounts = async (browserProvider: BrowserProvider, injectedProvider: EthereumProvider) => {
-    try {
-      await browserProvider.send("eth_requestAccounts", []);
-    } catch (err) {
-      const error = err as { message?: string; info?: { error?: { message?: string } } };
-      const detail = `${error?.message || ""} ${error?.info?.error?.message || ""}`.toLowerCase();
-      if (!detail.includes("must has at least one account") && !detail.includes("must have at least one account")) {
-        throw err;
+    if (injectedProvider._metamask?.isUnlocked) {
+      const unlocked = await injectedProvider._metamask.isUnlocked();
+      if (!unlocked) {
+        throw new Error("MetaMask is locked. Open MetaMask, unlock it, then connect again.");
       }
+    }
 
+    try {
       await injectedProvider.request({
         method: "wallet_requestPermissions",
         params: [{ eth_accounts: {} }],
       });
-      await browserProvider.send("eth_requestAccounts", []);
+    } catch (err) {
+      const error = err as { code?: number; message?: string; info?: { error?: { message?: string } } };
+      const detail = `${error?.message || ""} ${error?.info?.error?.message || ""}`.toLowerCase();
+      if (error?.code === 4001) throw err;
+      if (!detail.includes("already pending") && !detail.includes("request already pending")) {
+        throw err;
+      }
+    }
+
+    const accounts = await browserProvider.send("eth_requestAccounts", []);
+    if (!Array.isArray(accounts) || accounts.length === 0) {
+      throw new Error("MetaMask must have at least one account selected for this site.");
     }
   };
 

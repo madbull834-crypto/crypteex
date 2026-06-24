@@ -19,6 +19,9 @@ interface EthereumProvider {
   on: (event: string, handler: (...args: unknown[]) => void) => void;
   removeListener: (event: string, handler: (...args: unknown[]) => void) => void;
   isMetaMask?: boolean;
+  _metamask?: {
+    isUnlocked?: () => Promise<boolean>;
+  };
   providers?: EthereumProvider[];
 }
 
