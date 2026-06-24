@@ -42,6 +42,15 @@ interface Web3State {
 
 const Web3Ctx = createContext<Web3State | undefined>(undefined);
 
+function getInjectedMetaMaskProvider() {
+  const ethereum = window.ethereum;
+  if (!ethereum) return undefined;
+  if (ethereum.providers?.length) {
+    return ethereum.providers.find((provider) => provider.isMetaMask) ?? ethereum.providers[0];
+  }
+  return ethereum;
+}
+
 export function Web3Provider({ children }: { children: ReactNode }) {
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null);
@@ -54,14 +63,14 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     const error = err as { code?: number; message?: string; info?: { error?: { message?: string } } };
     const detail = `${error?.message || ""} ${error?.info?.error?.message || ""}`.toLowerCase();
     if (detail.includes("must has at least one account") || detail.includes("must have at least one account")) {
-      return "MetaMask has no account selected. Create or import a wallet account, unlock MetaMask, then connect again.";
+      return "No wallet account was exposed to this site. Unlock MetaMask, select an account for this website, and disable other wallet extensions if they are overriding MetaMask.";
     }
     if (error?.code === 4001) return "Wallet request was rejected in MetaMask.";
     if (error?.code === -32002) return "A MetaMask request is already open. Open MetaMask and complete it.";
     return error?.message || "MetaMask could not connect.";
   };
 
-  const requestWalletAccounts = async (browserProvider: BrowserProvider) => {
+  const requestWalletAccounts = async (browserProvider: BrowserProvider, injectedProvider: EthereumProvider) => {
     try {
       await browserProvider.send("eth_requestAccounts", []);
     } catch (err) {
@@ -71,7 +80,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         throw err;
       }
 
-      await window.ethereum?.request({
+      await injectedProvider.request({
         method: "wallet_requestPermissions",
         params: [{ eth_accounts: {} }],
       });
@@ -94,7 +103,8 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   }, []);
 
   const connect = useCallback(async () => {
-    if (!window.ethereum) {
+    const injectedProvider = getInjectedMetaMaskProvider();
+    if (!injectedProvider) {
       setWalletError("MetaMask was not detected. Open this page in a browser with the MetaMask extension installed.");
       window.open("https://metamask.io/download/", "_blank");
       return;
@@ -102,18 +112,18 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     setWalletError(null);
     setIsConnecting(true);
     try {
-      const browserProvider = new BrowserProvider(window.ethereum, "any");
-      await requestWalletAccounts(browserProvider);
+      const browserProvider = new BrowserProvider(injectedProvider, "any");
+      await requestWalletAccounts(browserProvider, injectedProvider);
       const network = await browserProvider.getNetwork();
       if (Number(network.chainId) !== CHAIN_ID) {
         try {
-          await window.ethereum.request({
+          await injectedProvider.request({
             method: "wallet_switchEthereumChain",
             params: [{ chainId: CHAIN_ID_HEX }],
           });
         } catch (err: unknown) {
           if ((err as { code?: number })?.code !== 4902) throw err;
-          await window.ethereum.request({
+          await injectedProvider.request({
             method: "wallet_addEthereumChain",
             params: [{
               chainId: CHAIN_ID_HEX,
@@ -139,17 +149,18 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   }, []);
 
   const switchNetwork = useCallback(async () => {
-    if (!window.ethereum) return;
+    const injectedProvider = getInjectedMetaMaskProvider();
+    if (!injectedProvider) return;
     setWalletError(null);
     try {
-      await window.ethereum.request({
+      await injectedProvider.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: CHAIN_ID_HEX }],
       });
     } catch (err: unknown) {
       const code = (err as { code?: number })?.code;
       if (code === 4902) {
-        await window.ethereum.request({
+        await injectedProvider.request({
           method: "wallet_addEthereumChain",
           params: [
             {
@@ -167,8 +178,9 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!window.ethereum) return;
-    const browserProvider = new BrowserProvider(window.ethereum);
+    const injectedProvider = getInjectedMetaMaskProvider();
+    if (!injectedProvider) return;
+    const browserProvider = new BrowserProvider(injectedProvider);
     setProvider(browserProvider);
     browserProvider.listAccounts().then((accounts) => {
       if (accounts.length > 0) refreshSigner(browserProvider);
@@ -178,11 +190,11 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     const handleAccountsChanged = () => refreshSigner(browserProvider);
     const handleChainChanged = () => window.location.reload();
 
-    window.ethereum.on("accountsChanged", handleAccountsChanged);
-    window.ethereum.on("chainChanged", handleChainChanged);
+    injectedProvider.on("accountsChanged", handleAccountsChanged);
+    injectedProvider.on("chainChanged", handleChainChanged);
     return () => {
-      window.ethereum?.removeListener("accountsChanged", handleAccountsChanged);
-      window.ethereum?.removeListener("chainChanged", handleChainChanged);
+      injectedProvider.removeListener("accountsChanged", handleAccountsChanged);
+      injectedProvider.removeListener("chainChanged", handleChainChanged);
     };
   }, [refreshSigner]);
 

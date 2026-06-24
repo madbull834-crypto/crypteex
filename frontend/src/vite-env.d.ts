@@ -19,6 +19,7 @@ interface EthereumProvider {
   on: (event: string, handler: (...args: unknown[]) => void) => void;
   removeListener: (event: string, handler: (...args: unknown[]) => void) => void;
   isMetaMask?: boolean;
+  providers?: EthereumProvider[];
 }
 
 interface Window {
