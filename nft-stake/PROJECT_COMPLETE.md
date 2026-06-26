@@ -32,7 +32,8 @@ You now have a **complete, production-grade NFT staking ecosystem** integrated i
 ✅ hardhat.config.ts                               ← Hardhat setup
 ✅ package.json                                    ← Dependencies
 ✅ tsconfig.json                                   ← TypeScript config
-✅ .env.example                                    ← Environment template
+✅ nft-stake/.env                                  ← Contract/deployment env
+✅ frontend/.env                                   ← Frontend env
 ✅ .gitignore                                      ← Git ignore rules
 ✅ README.md (500+ lines)                          ← Full documentation
 ```

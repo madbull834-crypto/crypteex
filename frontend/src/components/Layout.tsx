@@ -14,7 +14,7 @@ export function Layout() {
       {!contractsConfigured() && (
         <div className="bg-rose-600 px-4 py-2 text-center text-sm text-white">
           Contract addresses are not configured. Set VITE_USDT_ADDRESS, VITE_STAKE_ECOSYSTEM_ADDRESS and
-          VITE_MARKETPLACE_ADDRESS in frontend/.env.local.
+          VITE_MARKETPLACE_ADDRESS in frontend/.env.
         </div>
       )}
       <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/90 backdrop-blur">

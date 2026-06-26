@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { isAddress, MaxUint256, ZeroAddress } from "ethers";
 import { Card } from "../Card";
 import { TxButton } from "../TxButton";
@@ -7,6 +7,7 @@ import { useUserPosition } from "../../hooks/useUserPosition";
 import { formatUsdt } from "../../utils/format";
 import { PACKAGE_NAMES, STAKE_ECOSYSTEM_ADDRESS } from "../../config/contracts";
 import type { FixedPackageInfo } from "../../hooks/usePackages";
+import { isSelfReferral, referralFromUrl } from "../../utils/referral";
 
 export function SubscriptionPanel({
   packages,
@@ -19,8 +20,9 @@ export function SubscriptionPanel({
 }) {
   const { account, ecosystem, usdt, connect } = useWeb3();
   const { usdtAllowance, refetch } = useUserPosition();
-  const [sponsor, setSponsor] = useState("");
-  const sponsorValid = sponsor === "" || isAddress(sponsor);
+  const detectedSponsor = useMemo(() => referralFromUrl(), []);
+  const [sponsor, setSponsor] = useState(detectedSponsor);
+  const sponsorValid = sponsor === "" || (isAddress(sponsor) && !isSelfReferral(sponsor, account));
 
   if (!account) {
     return (
@@ -50,7 +52,11 @@ export function SubscriptionPanel({
           placeholder="0x..."
           className="rounded-lg border border-neutral-300 px-3 py-2 font-mono outline-none focus:border-amber-500"
         />
-        {!sponsorValid && <span className="text-xs text-rose-600">Invalid sponsor address</span>}
+        {!sponsorValid && (
+          <span className="text-xs text-rose-600">
+            {isSelfReferral(sponsor, account) ? "You cannot use your own wallet as sponsor" : "Invalid sponsor address"}
+          </span>
+        )}
       </label>
       <div className="grid gap-4 sm:grid-cols-3">
         {packages.map((pkg) => {

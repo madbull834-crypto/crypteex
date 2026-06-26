@@ -30,10 +30,8 @@ export function AdminMintPanel({ onMinted }: { onMinted: () => void }) {
   const mintMany = async (packageId: number, count: number) => {
     setPendingId(packageId);
     try {
-      for (let i = 0; i < count; i++) {
-        const tx = await ecosystem!.adminMintFixedNFTForSale(packageId);
-        await tx.wait();
-      }
+      const tx = await ecosystem!.adminBulkMintFixedNFTsForSale(packageId, count);
+      await tx.wait();
       push("success", `${count} ${PACKAGE_NAMES[packageId]} NFT${count > 1 ? "s" : ""} minted and listed`);
       onMinted();
     } catch (err) {
@@ -47,7 +45,7 @@ export function AdminMintPanel({ onMinted }: { onMinted: () => void }) {
     setSeeding(true);
     try {
       for (const id of PACKAGE_IDS) {
-        const tx = await ecosystem!.adminMintFixedNFTForSale(id);
+        const tx = await ecosystem!.adminBulkMintFixedNFTsForSale(id, 1);
         await tx.wait();
       }
       push("success", "Seeded one example NFT per tier");

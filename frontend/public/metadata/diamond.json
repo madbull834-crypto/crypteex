@@ -1,0 +1,19 @@
+{
+  "name": "Meta Crown Diamond NFT",
+  "description": "Meta Crown Diamond NFT membership artwork.",
+  "image": "ipfs://bafybeib2qwh4lnaei3zcchc3qt5ezxrd25faqougv5himyoitcj7zhoytq",
+  "attributes": [
+    {
+      "trait_type": "Tier",
+      "value": "Diamond"
+    },
+    {
+      "trait_type": "Collection",
+      "value": "Meta Crown"
+    },
+    {
+      "trait_type": "Utility",
+      "value": "Subscription, Marketplace, Staking Ecosystem"
+    }
+  ]
+}

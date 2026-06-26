@@ -33,6 +33,15 @@ export interface UserPosition {
   refetch: () => void;
 }
 
+const DAY = 86400;
+
+function calculateExitDeduction(user: UserStruct): bigint {
+  if (!user.active || user.positionType !== 2) return 0n;
+  const elapsed = Math.max(0, Math.floor(Date.now() / 1000) - Number(user.activationTime));
+  const bps = elapsed < 90 * DAY ? 2500n : elapsed < 180 * DAY ? 1500n : 500n;
+  return (user.stakeAmount * bps) / 10000n;
+}
+
 const ZERO_USER: UserStruct = {
   positionType: 0,
   packageId: 0,
@@ -97,20 +106,18 @@ export function useUserPosition(): UserPosition {
           reTopupCount: rawUser.reTopupCount,
         };
 
-        const [rewardBalance, pendingRoi, pendingPassive, remainingCap, isCapped, roiClaimsCount] =
+        const [rewardBalance, pendingRoi, pendingPassive, remainingCap, totalCap, totalEarned, roiClaimsCount] =
           await Promise.all([
             ecosystemRead!.userRewardBalance(account),
             ecosystemRead!.pendingROIReward(account),
             ecosystemRead!.pendingPassiveIncome(account),
             ecosystemRead!.remainingCap(account),
-            ecosystemRead!.isUserCapped(account),
+            ecosystemRead!.totalCap(account),
+            ecosystemRead!.totalEarned(account),
             ecosystemRead!.roiClaimsCount(account),
           ]);
 
-        let exitDeduction = 0n;
-        if (user.active && user.positionType === 2) {
-          exitDeduction = await ecosystemRead!.calculateExitDeduction(account);
-        }
+        const exitDeduction = calculateExitDeduction(user);
 
         let usdtBalance = 0n;
         let usdtAllowance = 0n;
@@ -129,7 +136,7 @@ export function useUserPosition(): UserPosition {
           pendingPassive,
           exitDeduction,
           remainingCap,
-          isCapped,
+          isCapped: totalCap > 0n && totalEarned >= totalCap,
           roiClaimsCount: Number(roiClaimsCount),
           usdtBalance,
           usdtAllowance,

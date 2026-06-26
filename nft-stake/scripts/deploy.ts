@@ -43,6 +43,33 @@ function explorerForChain(chainId: number): string {
   return "";
 }
 
+async function tokenDecimals(tokenAddress: string): Promise<number> {
+  const token = new ethers.Contract(tokenAddress, ["function decimals() view returns (uint8)"], ethers.provider);
+  return Number(await token.decimals());
+}
+
+function frontendChainName(chainId: number, networkName: string): string {
+  if (process.env.FRONTEND_CHAIN_NAME) return process.env.FRONTEND_CHAIN_NAME;
+  if (chainId === 56) return "BNB Smart Chain";
+  if (chainId === 97) return "BNB Smart Chain Testnet";
+  if (chainId === 11155111) return "Sepolia";
+  return networkName;
+}
+
+function resolveBaseURI(isMainnet: boolean): string {
+  const value = process.env.BASE_URI?.trim() || (isMainnet ? "" : "http://127.0.0.1:5173/metadata/");
+  if (!value) {
+    throw new Error("BASE_URI is required for mainnet. Use a public HTTPS metadata URL, for example https://your-domain.com/metadata/");
+  }
+  if (!value.endsWith("/")) {
+    throw new Error("BASE_URI must end with /. Example: https://your-domain.com/metadata/");
+  }
+  if (isMainnet && value.includes("YOUR_DOMAIN")) {
+    throw new Error("Replace the BASE_URI placeholder with your real public domain before mainnet deployment.");
+  }
+  return value;
+}
+
 export async function deployMetaCrown() {
   const [deployer] = await ethers.getSigners();
   const providerNetwork = await ethers.provider.getNetwork();
@@ -57,10 +84,11 @@ export async function deployMetaCrown() {
 
   const treasury = optionalAddress("TREASURY_ADDRESS") || deployer.address;
   const airdrop = optionalAddress("AIRDROP_ADDRESS") || deployer.address;
-  const baseURI = process.env.BASE_URI || "https://api.dicebear.com/9.x/adventurer/svg?seed=metacrown-";
+  const baseURI = resolveBaseURI(isMainnet);
 
   let deployedMockUSDT = false;
   let usdtAddress = optionalAddress("USDT_ADDRESS");
+  let orbdSwapLockerAddress = ethers.ZeroAddress;
 
   if (!usdtAddress) {
     if (isMainnet) {
@@ -84,15 +112,41 @@ export async function deployMetaCrown() {
     throw new Error("Could not resolve a valid USDT address.");
   }
 
+  const usdtDecimals = await tokenDecimals(usdtAddress);
+
   console.log("Treasury:", treasury);
   console.log("Airdrop:", airdrop);
   console.log("USDT:", usdtAddress, deployedMockUSDT ? "(mock)" : "(external)");
+  console.log("USDT decimals:", usdtDecimals);
   console.log("Base URI:", baseURI);
 
+  if (isMainnet) {
+    const orbdAddress = optionalAddress("ORBD_ADDRESS");
+    const infinityRouterAddress = optionalAddress("PANCAKE_INFINITY_ROUTER_ADDRESS");
+    const permit2Address = optionalAddress("PANCAKE_PERMIT2_ADDRESS");
+    if (!orbdAddress || !infinityRouterAddress || !permit2Address) {
+      throw new Error("BSC mainnet requires ORBD_ADDRESS, PANCAKE_INFINITY_ROUTER_ADDRESS, and PANCAKE_PERMIT2_ADDRESS.");
+    }
+
+    const OrbdSwapLocker = await ethers.getContractFactory("OrbdSwapLocker");
+    const locker = await OrbdSwapLocker.deploy(usdtAddress, orbdAddress, infinityRouterAddress, permit2Address);
+    await locker.waitForDeployment();
+    orbdSwapLockerAddress = await locker.getAddress();
+    console.log("OrbdSwapLocker:", orbdSwapLockerAddress);
+    console.log("ORBD:", orbdAddress);
+    console.log("Pancake Infinity Router:", infinityRouterAddress);
+    console.log("Permit2:", permit2Address);
+  }
+
   const Ecosystem = await ethers.getContractFactory("MetaCrownNFTStakeEcosystem");
-  const ecosystem = await Ecosystem.deploy(usdtAddress, treasury, airdrop, baseURI);
+  const ecosystem = await Ecosystem.deploy(usdtAddress, treasury, airdrop, baseURI, orbdSwapLockerAddress);
   await ecosystem.waitForDeployment();
   const ecosystemAddress = await ecosystem.getAddress();
+
+  if (orbdSwapLockerAddress !== ethers.ZeroAddress) {
+    const locker = await ethers.getContractAt("OrbdSwapLocker", orbdSwapLockerAddress);
+    await (await locker.updateEcosystem(ecosystemAddress)).wait();
+  }
 
   const Marketplace = await ethers.getContractFactory("MetaCrownNFTMarketplace");
   const marketplace = await Marketplace.deploy(usdtAddress, ecosystemAddress);
@@ -110,6 +164,7 @@ export async function deployMetaCrown() {
     contracts: {
       usdt: usdtAddress,
       mockUSDT: deployedMockUSDT,
+      orbdSwapLocker: orbdSwapLockerAddress,
       ecosystem: ecosystemAddress,
       marketplace: marketplaceAddress,
     },
@@ -119,12 +174,20 @@ export async function deployMetaCrown() {
     },
     frontendEnv: {
       VITE_CHAIN_ID: String(chainId),
-      VITE_CHAIN_NAME: networkName,
+      VITE_CHAIN_NAME: frontendChainName(chainId, networkName),
       VITE_RPC_URL: frontendRpcForChain(chainId),
       VITE_BLOCK_EXPLORER: explorerForChain(chainId),
       VITE_USDT_ADDRESS: usdtAddress,
+      VITE_USDT_DECIMALS: String(usdtDecimals),
       VITE_STAKE_ECOSYSTEM_ADDRESS: ecosystemAddress,
       VITE_MARKETPLACE_ADDRESS: marketplaceAddress,
+      VITE_ORBD_ADDRESS: process.env.VITE_ORBD_ADDRESS || process.env.ORBD_ADDRESS || "",
+      VITE_PANCAKE_INFINITY_CL_PATH: process.env.VITE_PANCAKE_INFINITY_CL_PATH || process.env.PANCAKE_INFINITY_CL_PATH || "",
+      VITE_EVENT_LOOKBACK_BLOCKS: process.env.VITE_EVENT_LOOKBACK_BLOCKS || "50000",
+      VITE_EVENT_CHUNK_BLOCKS: process.env.VITE_EVENT_CHUNK_BLOCKS || "1000",
+      VITE_PLATFORM_FIRST_TOKEN_ID: process.env.VITE_PLATFORM_FIRST_TOKEN_ID || "0",
+      VITE_PLATFORM_LAST_TOKEN_ID: process.env.VITE_PLATFORM_LAST_TOKEN_ID || "0",
+      VITE_ENABLE_RESALE_SCAN: process.env.VITE_ENABLE_RESALE_SCAN || "true",
     },
   };
 
@@ -144,7 +207,10 @@ export async function deployMetaCrown() {
 
   if (networkName !== "hardhat" && networkName !== "localhost") {
     console.log("\nOptional verify commands after block explorer indexes the contracts:");
-    console.log(`npx hardhat verify --network ${networkName} ${ecosystemAddress} ${usdtAddress} ${treasury} ${airdrop} "${baseURI}"`);
+    if (orbdSwapLockerAddress !== ethers.ZeroAddress) {
+      console.log(`npx hardhat verify --network ${networkName} ${orbdSwapLockerAddress} ${usdtAddress} ${process.env.ORBD_ADDRESS} ${process.env.PANCAKE_INFINITY_ROUTER_ADDRESS} ${process.env.PANCAKE_PERMIT2_ADDRESS}`);
+    }
+    console.log(`npx hardhat verify --network ${networkName} ${ecosystemAddress} ${usdtAddress} ${treasury} ${airdrop} "${baseURI}" ${orbdSwapLockerAddress}`);
     console.log(`npx hardhat verify --network ${networkName} ${marketplaceAddress} ${usdtAddress} ${ecosystemAddress}`);
   }
 }

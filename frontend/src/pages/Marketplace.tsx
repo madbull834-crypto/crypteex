@@ -8,6 +8,7 @@ import { formatUsdt } from "../utils/format";
 import { PACKAGE_NAMES } from "../config/contracts";
 import { usePackages } from "../hooks/usePackages";
 import { useSubscriptions } from "../hooks/useSubscriptions";
+import { ReferralPanel } from "../components/ReferralPanel";
 
 type StatusFilter = "all" | "platform" | "resale" | "owned";
 type SortMode = "price-asc" | "price-desc" | "newest";
@@ -71,6 +72,8 @@ export default function Marketplace() {
       </section>
 
       <SubscriptionPanel packages={fixedPackages} subscriptions={subscriptions} onChanged={refetchSubscriptions} />
+
+      <ReferralPanel />
 
       <section className="grid gap-4 sm:grid-cols-4">
         <StatCard label="Platform Listings" value={platformCount} />

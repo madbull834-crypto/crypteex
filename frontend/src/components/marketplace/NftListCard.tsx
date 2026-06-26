@@ -8,6 +8,7 @@ import { useUserPosition } from "../../hooks/useUserPosition";
 import { formatUsdt, parseUsdt, shortenAddress } from "../../utils/format";
 import { PACKAGE_NAMES, STAKE_ECOSYSTEM_ADDRESS, MARKETPLACE_ADDRESS } from "../../config/contracts";
 import type { NftCatalogEntry } from "../../hooks/useNftCatalog";
+import { getOrbdRouteForPlatformBuy } from "../../services/orbdRoute";
 
 const STATUS_BADGE: Record<NftCatalogEntry["status"], string> = {
   platform: "bg-emerald-100 text-emerald-700",
@@ -151,11 +152,11 @@ export function NftListCard({
         ) : (
           <TxButton
             className="flex-1"
-            onClick={() =>
-              entry.status === "platform"
-                ? ecosystem!.buyListedFixedNFT(entry.tokenId)
-                : marketplace!.buy(entry.tokenId)
-            }
+            onClick={async () => {
+              if (entry.status !== "platform") return marketplace!.buy(entry.tokenId);
+              const route = await getOrbdRouteForPlatformBuy(entry.tokenId, entry.price, entry.packageId);
+              return ecosystem!.buyListedFixedNFT(entry.tokenId, route.minimumOrbdOut, route.commands, route.inputs);
+            }}
             successMessage="NFT purchased"
             onSuccess={onChanged}
           >

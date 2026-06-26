@@ -81,26 +81,30 @@ async function main() {
   const mintedTokenIds: string[] = [];
 
   for (let i = 0; i < count; i += 1) {
-    const packageId = getPackageId(i);
-    const tx = await ecosystem.adminMintFixedNFTForSale(packageId);
+    counts[getPackageId(i)] += 1;
+  }
+
+  let minted = 0;
+  for (const packageId of [1, 2, 3]) {
+    const packageCount = counts[packageId];
+    if (packageCount === 0) continue;
+
+    const tx = await ecosystem.adminBulkMintFixedNFTsForSale(packageId, packageCount);
     const receipt = await tx.wait();
-    counts[packageId] += 1;
+    minted += packageCount;
 
     for (const log of receipt?.logs || []) {
       try {
         const parsed = ecosystem.interface.parseLog(log);
         if (parsed?.name === "NFTListed") {
           mintedTokenIds.push(parsed.args.tokenId.toString());
-          break;
         }
       } catch {
         // Ignore non-ecosystem logs.
       }
     }
 
-    if ((i + 1) % 10 === 0 || i + 1 === count) {
-      console.log(`Minted ${i + 1}/${count}`);
-    }
+    console.log(`Minted ${minted}/${count}`);
   }
 
   console.log("\nAdmin mint completed.");

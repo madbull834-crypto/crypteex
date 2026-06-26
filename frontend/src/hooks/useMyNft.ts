@@ -26,7 +26,7 @@ export function useMyNft() {
     async function load() {
       setLoading(true);
       try {
-        const tokenId: bigint = await ecosystemRead!.tokenOfUser(account);
+        const tokenId: bigint = await ecosystemRead!.userToTokenId(account);
         if (tokenId === 0n) {
           if (!cancelled) setInfo(null);
           return;

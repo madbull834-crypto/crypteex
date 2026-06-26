@@ -24,7 +24,8 @@ describe("MetaCrownNFTStakeEcosystem", function () {
       await usdt.getAddress(),
       treasury.address,
       airdrop.address,
-      "ipfs://base/"
+      "ipfs://base/",
+      ZERO
     );
     await ecosystem.waitForDeployment();
 
@@ -43,8 +44,37 @@ describe("MetaCrownNFTStakeEcosystem", function () {
     return { owner, treasury, airdrop, root, sponsor, user, u2, u3, many, usdt, ecosystem, marketplace };
   }
 
+  async function deployFixtureWithOrbdLocker() {
+    const [owner, treasury, airdrop, root, sponsor, user] = await ethers.getSigners();
+
+    const MockUSDT = await ethers.getContractFactory("MockUSDT");
+    const usdt: any = await MockUSDT.deploy();
+    await usdt.waitForDeployment();
+
+    const MockLocker = await ethers.getContractFactory("MockOrbdSwapLocker");
+    const locker: any = await MockLocker.deploy(await usdt.getAddress());
+    await locker.waitForDeployment();
+
+    const Ecosystem = await ethers.getContractFactory("MetaCrownNFTStakeEcosystem");
+    const ecosystem: any = await Ecosystem.deploy(
+      await usdt.getAddress(),
+      treasury.address,
+      airdrop.address,
+      "ipfs://base/",
+      await locker.getAddress()
+    );
+    await ecosystem.waitForDeployment();
+
+    for (const account of [owner, root, sponsor, user]) {
+      await usdt.mint(account.address, U("1000000"));
+      await usdt.connect(account).approve(await ecosystem.getAddress(), U("1000000"));
+    }
+    await ecosystem.connect(owner).fundRewardPool(U("500000"));
+    return { owner, root, sponsor, user, usdt, ecosystem, locker };
+  }
+
   async function mintListedNFT(ecosystem: any, owner: any, packageId: number) {
-    const tx = await ecosystem.connect(owner).adminMintFixedNFTForSale(packageId);
+    const tx = await ecosystem.connect(owner).adminBulkMintFixedNFTsForSale(packageId, 1);
     const receipt = await tx.wait();
     for (const log of receipt.logs) {
       try {
@@ -61,7 +91,7 @@ describe("MetaCrownNFTStakeEcosystem", function () {
     const tokenId = await mintListedNFT(ecosystem, owner, packageId);
     expect(subscription).to.equal((await ecosystem.fixedPackages(packageId)).platformFee);
     await ecosystem.connect(buyer).purchaseSubscription(packageId, sponsor);
-    await ecosystem.connect(buyer).buyListedFixedNFT(tokenId);
+    await ecosystem.connect(buyer).buyListedFixedNFT(tokenId, 0, "0x", []);
     return tokenId;
   }
 
@@ -72,8 +102,33 @@ describe("MetaCrownNFTStakeEcosystem", function () {
     expect(await ecosystem.withdrawalDeductionBps()).to.equal(1000);
     expect((await ecosystem.fixedPackages(SILVER)).nftValue).to.equal(U("10"));
     expect((await ecosystem.stakePackages(GOLD)).platformFee).to.equal(U("100"));
-    expect(await ecosystem.STAKING_TERM()).to.equal(365 * 24 * 60 * 60);
     expect((await ecosystem.stakePackages(SILVER)).rewardRateBps).to.equal(400);
+  });
+
+  it("scales all USDT package values from the payment token decimals", async function () {
+    const [owner, treasury, airdrop] = await ethers.getSigners();
+    const U18 = (value: string) => ethers.parseUnits(value, 18);
+
+    const MockUSDT18 = await ethers.getContractFactory("MockUSDT18");
+    const usdt18: any = await MockUSDT18.deploy();
+    await usdt18.waitForDeployment();
+
+    const Ecosystem = await ethers.getContractFactory("MetaCrownNFTStakeEcosystem");
+    const ecosystem: any = await Ecosystem.deploy(
+      await usdt18.getAddress(),
+      treasury.address,
+      airdrop.address,
+      "ipfs://base/",
+      ZERO
+    );
+    await ecosystem.waitForDeployment();
+
+    expect((await ecosystem.fixedPackages(SILVER)).nftValue).to.equal(U18("10"));
+    expect((await ecosystem.fixedPackages(GOLD)).nftValue).to.equal(U18("50"));
+    expect((await ecosystem.fixedPackages(DIAMOND)).platformFee).to.equal(U18("50"));
+    expect((await ecosystem.stakePackages(SILVER)).minStake).to.equal(U18("1000"));
+    expect((await ecosystem.stakePackages(GOLD)).platformFee).to.equal(U18("100"));
+    expect(await ecosystem.owner()).to.equal(owner.address);
   });
 
   it("joins fixed Meta Crown packages and splits platform fees", async function () {
@@ -82,7 +137,7 @@ describe("MetaCrownNFTStakeEcosystem", function () {
     await expect(ecosystem.connect(root).purchaseSubscription(SILVER, ZERO))
       .to.emit(ecosystem, "Subscribed")
       .and.to.emit(ecosystem, "WeeklyPoolFunded");
-    await expect(ecosystem.connect(root).buyListedFixedNFT(tokenId)).to.emit(ecosystem, "NFTSold");
+    await expect(ecosystem.connect(root).buyListedFixedNFT(tokenId, 0, "0x", [])).to.emit(ecosystem, "NFTSold");
 
     const user = await ecosystem.getUser(root.address);
     expect(user.positionType).to.equal(1);
@@ -90,6 +145,37 @@ describe("MetaCrownNFTStakeEcosystem", function () {
     expect(await ecosystem.ownerOf(user.tokenId)).to.equal(root.address);
     expect(await ecosystem.totalNFTValueBalance()).to.equal(U("10"));
     expect(await ecosystem.platformFeeBalance()).to.equal(0);
+  });
+
+  it("routes package-specific platform NFT value to the ORBD swap locker", async function () {
+    const { ecosystem, owner, root, sponsor, user, usdt, locker } = await deployFixtureWithOrbdLocker();
+    const silverToken = await mintListedNFT(ecosystem, owner, SILVER);
+    const goldToken = await mintListedNFT(ecosystem, owner, GOLD);
+    const diamondToken = await mintListedNFT(ecosystem, owner, DIAMOND);
+
+    await ecosystem.connect(root).purchaseSubscription(SILVER, ZERO);
+    await expect(ecosystem.connect(root).buyListedFixedNFT(silverToken, 1, "0x10", []))
+      .to.emit(locker, "MockSwapAndLock")
+      .withArgs(root.address, U("0.5"), 1);
+
+    await ecosystem.connect(sponsor).purchaseSubscription(GOLD, ZERO);
+    await expect(ecosystem.connect(sponsor).buyListedFixedNFT(goldToken, 1, "0x10", []))
+      .to.emit(locker, "MockSwapAndLock")
+      .withArgs(sponsor.address, U("5"), 1);
+
+    await ecosystem.connect(user).purchaseSubscription(DIAMOND, ZERO);
+    await expect(ecosystem.connect(user).buyListedFixedNFT(diamondToken, 1, "0x10", []))
+      .to.emit(locker, "MockSwapAndLock")
+      .withArgs(user.address, U("1"), 1);
+
+    expect(await locker.calls()).to.equal(3);
+    expect(await locker.lastBuyer()).to.equal(user.address);
+    expect(await locker.lastUsdtAmount()).to.equal(U("1"));
+    expect(await usdt.balanceOf(await locker.getAddress())).to.equal(U("6.5"));
+    expect(await ecosystem.totalNFTValueBalance()).to.equal(U("103.5"));
+    expect(await ecosystem.ownerOf(silverToken)).to.equal(root.address);
+    expect(await ecosystem.ownerOf(goldToken)).to.equal(sponsor.address);
+    expect(await ecosystem.ownerOf(diamondToken)).to.equal(user.address);
   });
 
   it("lets admin mint listed NFTs and buyers relist immediately", async function () {
@@ -113,6 +199,21 @@ describe("MetaCrownNFTStakeEcosystem", function () {
     expect(await ecosystem.balanceOf(root.address)).to.equal(2);
     expect(await ecosystem.ownerOf(2)).to.equal(root.address);
     expect(await ecosystem.ownerOf(3)).to.equal(root.address);
+  });
+
+  it("lets admin bulk mint listed fixed NFTs for sale", async function () {
+    const { ecosystem, owner } = await deployFixture();
+    await expect(ecosystem.connect(owner).adminBulkMintFixedNFTsForSale(SILVER, 3))
+      .to.emit(ecosystem, "NFTListed")
+      .withArgs(1, SILVER, U("10"));
+
+    expect(await ecosystem.ownerOf(1)).to.equal(await ecosystem.getAddress());
+    expect(await ecosystem.ownerOf(2)).to.equal(await ecosystem.getAddress());
+    expect(await ecosystem.ownerOf(3)).to.equal(await ecosystem.getAddress());
+    expect((await ecosystem.nftSales(1)).active).to.equal(true);
+    expect((await ecosystem.nftSales(2)).packageId).to.equal(SILVER);
+    expect((await ecosystem.nftSales(3)).packageId).to.equal(SILVER);
+    await expect(ecosystem.connect(owner).adminBulkMintFixedNFTsForSale(SILVER, 0)).to.be.reverted;
   });
 
   it("mints two same-category replacement NFTs to the seller after a 2X marketplace sale", async function () {
@@ -139,19 +240,56 @@ describe("MetaCrownNFTStakeEcosystem", function () {
   it("requires a permanent category subscription before an NFT purchase", async function () {
     const { ecosystem, owner, root, sponsor, user } = await deployFixture();
     const goldToken = await mintListedNFT(ecosystem, owner, GOLD);
-    await expect(ecosystem.connect(root).buyListedFixedNFT(goldToken)).to.be.reverted;
+    await expect(ecosystem.connect(root).buyListedFixedNFT(goldToken, 0, "0x", [])).to.be.reverted;
     await ecosystem.connect(root).purchaseSubscription(SILVER, ZERO);
-    await expect(ecosystem.connect(root).buyListedFixedNFT(goldToken)).to.be.reverted;
+    await expect(ecosystem.connect(root).buyListedFixedNFT(goldToken, 0, "0x", [])).to.be.reverted;
     expect(await ecosystem.subscriptions(root.address, SILVER)).to.equal(true);
 
     await ecosystem.connect(root).purchaseSubscription(GOLD, ZERO);
-    await ecosystem.connect(root).buyListedFixedNFT(goldToken);
+    await ecosystem.connect(root).buyListedFixedNFT(goldToken, 0, "0x", []);
     await buyFixedNFT(ecosystem, owner, sponsor, U("10"), GOLD, root.address);
     await buyFixedNFT(ecosystem, owner, user, U("50"), DIAMOND, sponsor.address);
 
-    expect((await ecosystem.getUser(root.address)).nftValue).to.equal(U("100"));
-    expect((await ecosystem.getUser(sponsor.address)).nftValue).to.equal(U("100"));
-    expect((await ecosystem.getUser(user.address)).nftValue).to.equal(U("500"));
+    expect((await ecosystem.getUser(root.address)).nftValue).to.equal(U("50"));
+    expect((await ecosystem.getUser(sponsor.address)).nftValue).to.equal(U("50"));
+    expect((await ecosystem.getUser(user.address)).nftValue).to.equal(U("50"));
+  });
+
+  it("blocks direct ERC721 transfers to wallets without the NFT category subscription", async function () {
+    const { ecosystem, owner, root, user } = await deployFixture();
+    const tokenId = await buyFixedNFT(ecosystem, owner, root, U("5"), SILVER, ZERO);
+
+    await expect(ecosystem.connect(root).transferFrom(root.address, user.address, tokenId)).to.be.reverted;
+  });
+
+  it("requires sponsors to be subscribed NFT holders before referring", async function () {
+    const { ecosystem, owner, root, sponsor, user } = await deployFixture();
+
+    await ecosystem.connect(root).purchaseSubscription(SILVER, ZERO);
+    await expect(ecosystem.connect(sponsor).purchaseSubscription(SILVER, root.address)).to.be.reverted;
+    await expect(ecosystem.connect(user).joinStakePackage(U("1000"), 1, root.address)).to.be.reverted;
+
+    const tokenId = await mintListedNFT(ecosystem, owner, SILVER);
+    await ecosystem.connect(root).buyListedFixedNFT(tokenId, 0, "0x", []);
+
+    await expect(ecosystem.connect(sponsor).purchaseSubscription(SILVER, root.address))
+      .to.emit(ecosystem, "Subscribed")
+      .withArgs(sponsor.address, SILVER, U("5"), root.address);
+    await ecosystem.connect(user).joinStakePackage(U("1000"), 1, root.address);
+    expect((await ecosystem.getUser(user.address)).sponsor).to.equal(root.address);
+  });
+
+  it("lets the admin sponsor users without subscribing or holding a platform NFT", async function () {
+    const { ecosystem, owner, user } = await deployFixture();
+
+    await expect(ecosystem.connect(user).joinStakePackage(U("1000"), 1, owner.address))
+      .to.emit(ecosystem, "UserJoined")
+      .withArgs(user.address, 2, SILVER, U("1000"), owner.address, 1);
+
+    const record = await ecosystem.getUser(user.address);
+    expect(record.sponsor).to.equal(owner.address);
+    expect(await ecosystem.activeDirectCount(owner.address)).to.equal(1);
+    expect(await ecosystem.totalDirectBusiness(owner.address)).to.equal(U("1000"));
   });
 
   it("joins stake packages by amount and prevents duplicate active positions", async function () {
@@ -162,8 +300,37 @@ describe("MetaCrownNFTStakeEcosystem", function () {
     expect(record.packageId).to.equal(GOLD);
     expect(await ecosystem.totalStakeBalance()).to.equal(U("7000"));
     await ecosystem.connect(user).purchaseSubscription(SILVER, ZERO);
-    await expect(ecosystem.connect(user).buyListedFixedNFT(await mintListedNFT(ecosystem, owner, SILVER))).to.be.reverted;
+    await expect(
+      ecosystem.connect(user).buyListedFixedNFT(await mintListedNFT(ecosystem, owner, SILVER), 0, "0x", [])
+    ).to.be.reverted;
     await expect(ecosystem.connect(user).joinStakePackage(U("999"), 1, ZERO)).to.be.reverted;
+  });
+
+  it("lets admin activate an offline-paid stake position for any user", async function () {
+    const { ecosystem, owner, user, u2, usdt } = await deployFixture();
+    const contractAddress = await ecosystem.getAddress();
+    const beforeUser = await usdt.balanceOf(user.address);
+    const beforeContract = await usdt.balanceOf(contractAddress);
+
+    await expect(ecosystem.connect(user).adminActivateStakePosition(u2.address, U("1000"), 1, owner.address)).to.be.reverted;
+    await expect(ecosystem.connect(owner).adminActivateStakePosition(user.address, U("1000"), 1, owner.address))
+      .to.emit(ecosystem, "UserJoined")
+      .withArgs(user.address, 2, SILVER, U("1000"), owner.address, 1);
+
+    const record = await ecosystem.getUser(user.address);
+    expect(record.active).to.equal(true);
+    expect(record.positionType).to.equal(2);
+    expect(record.stakeAmount).to.equal(U("1000"));
+    expect(record.platformFeePaid).to.equal(0);
+    expect(record.sponsor).to.equal(owner.address);
+    expect(await ecosystem.balanceOf(user.address)).to.equal(1);
+    expect(await ecosystem.totalStakeBalance()).to.equal(U("1000"));
+    expect(await usdt.balanceOf(user.address)).to.equal(beforeUser);
+    expect(await usdt.balanceOf(contractAddress)).to.equal(beforeContract);
+
+    await time.increase(MONTH);
+    expect(await ecosystem.pendingROIReward(user.address)).to.equal(U("40"));
+    await expect(ecosystem.connect(owner).adminActivateStakePosition(user.address, U("1000"), 1, ZERO)).to.be.reverted;
   });
 
   it("requires active sponsors and tracks direct/team business", async function () {
@@ -174,9 +341,9 @@ describe("MetaCrownNFTStakeEcosystem", function () {
     await buyFixedNFT(ecosystem, owner, sponsor, U("10"), GOLD, root.address);
     await ecosystem.connect(user).joinStakePackage(U("2000"), 1, sponsor.address);
 
-    expect(await ecosystem.getDirectCount(sponsor.address)).to.equal(1);
-    expect(await ecosystem.getDirectBusiness(sponsor.address)).to.equal(U("2000"));
-    expect(await ecosystem.getTeamBusiness(root.address)).to.equal(U("2100"));
+    expect(await ecosystem.activeDirectCount(sponsor.address)).to.equal(1);
+    expect(await ecosystem.totalDirectBusiness(sponsor.address)).to.equal(U("2000"));
+    expect(await ecosystem.totalTeamBusiness(root.address)).to.equal(U("2050"));
     expect(await ecosystem.userRewardBalance(sponsor.address)).to.equal(U("100"));
   });
 
@@ -201,15 +368,19 @@ describe("MetaCrownNFTStakeEcosystem", function () {
   });
 
   it("credits three-level income without double-paying level one", async function () {
-    const { ecosystem, root, sponsor, user, u2 } = await deployFixture();
-    await ecosystem.connect(root).joinStakePackage(U("1000"), 1, ZERO);
-    await ecosystem.connect(sponsor).joinStakePackage(U("1000"), 1, root.address);
-    await ecosystem.connect(user).joinStakePackage(U("1000"), 1, sponsor.address);
+    const { ecosystem, owner, root, sponsor, user, u2 } = await deployFixture();
+    await buyFixedNFT(ecosystem, owner, root, U("50"), DIAMOND, ZERO);
+    await buyFixedNFT(ecosystem, owner, sponsor, U("50"), DIAMOND, root.address);
+    await buyFixedNFT(ecosystem, owner, user, U("50"), DIAMOND, sponsor.address);
+
+    const userBefore = await ecosystem.userRewardBalance(user.address);
+    const sponsorBefore = await ecosystem.userRewardBalance(sponsor.address);
+    const rootBefore = await ecosystem.userRewardBalance(root.address);
     await ecosystem.connect(u2).joinStakePackage(U("1000"), 1, user.address);
 
-    expect(await ecosystem.userRewardBalance(user.address)).to.equal(U("50"));
-    expect(await ecosystem.userRewardBalance(sponsor.address)).to.equal(U("70"));
-    expect(await ecosystem.userRewardBalance(root.address)).to.equal(U("80"));
+    expect((await ecosystem.userRewardBalance(user.address)) - userBefore).to.equal(U("50"));
+    expect((await ecosystem.userRewardBalance(sponsor.address)) - sponsorBefore).to.equal(U("20"));
+    expect((await ecosystem.userRewardBalance(root.address)) - rootBefore).to.equal(U("10"));
   });
 
   it("accrues passive income for fixed package users", async function () {
@@ -221,7 +392,7 @@ describe("MetaCrownNFTStakeEcosystem", function () {
 
     await buyFixedNFT(ecosystem, owner, many[1], U("5"), SILVER, root.address);
     await time.increase(MONTH);
-    expect(await ecosystem.pendingPassiveIncome(root.address)).to.equal(U("25"));
+    expect(await ecosystem.pendingPassiveIncome(root.address)).to.equal(U("2.5"));
 
     await ecosystem.connect(root).claimPassiveIncome();
     expect(await ecosystem.userRewardBalance(root.address)).to.be.gt(0);
@@ -237,25 +408,21 @@ describe("MetaCrownNFTStakeEcosystem", function () {
     expect(await ecosystem.pendingPassiveIncome(root.address)).to.equal(U("0.1"));
   });
 
-  it("claims package ROI every 30 days, applies boost, and prevents early repeat", async function () {
-    const { ecosystem, root, sponsor, user } = await deployFixture();
+  it("claims package ROI every 30 days and prevents early repeat", async function () {
+    const { ecosystem, root } = await deployFixture();
     await ecosystem.connect(root).joinStakePackage(U("1000"), 1, ZERO);
-    await ecosystem.connect(sponsor).joinStakePackage(U("4000"), 1, root.address);
-    expect(await ecosystem.getUserRewardBoost(root.address)).to.equal(100);
+    expect(await ecosystem.pendingROIReward(root.address)).to.equal(0);
 
     await time.increase(30 * 24 * 60 * 60);
-    // Silver monthly ROI 4% + 1% team-business boost = 5%.
-    expect(await ecosystem.pendingROIReward(root.address)).to.equal(U("50"));
+    // Silver monthly ROI 4%.
+    expect(await ecosystem.pendingROIReward(root.address)).to.equal(U("40"));
     await ecosystem.connect(root).claimROIReward();
     await expect(ecosystem.connect(root).claimROIReward()).to.be.reverted;
 
     await time.increase(30 * 24 * 60 * 60);
-    expect(await ecosystem.pendingROIReward(root.address)).to.equal(U("50"));
+    expect(await ecosystem.pendingROIReward(root.address)).to.equal(U("40"));
     await ecosystem.connect(root).claimROIReward();
     expect(await ecosystem.roiClaimsCount(root.address)).to.equal(2);
-
-    await ecosystem.connect(user).joinStakePackage(U("40000"), 1, sponsor.address);
-    expect(await ecosystem.getUserRewardBoost(sponsor.address)).to.equal(200);
   });
 
   it("accumulates missed monthly ROI periods and caps the one-year plan at 12", async function () {
@@ -304,7 +471,7 @@ describe("MetaCrownNFTStakeEcosystem", function () {
     for (let i = 0; i < 25; i++) {
       await buyFixedNFT(ecosystem, owner, many[i], U("5"), SILVER, root.address);
     }
-    expect(await ecosystem.isRoyaltyMember(root.address)).to.equal(true);
+    expect(await ecosystem.royaltyMember(root.address)).to.equal(true);
     const monthId = Math.floor((await time.latest()) / MONTH);
     await ecosystem.closeMonthlyRoyaltyPool(monthId);
     await ecosystem.connect(root).claimMonthlyRoyalty(monthId);
@@ -317,7 +484,7 @@ describe("MetaCrownNFTStakeEcosystem", function () {
     for (let i = 0; i < 25; i++) {
       await buyFixedNFT(ecosystem, owner, many[i], U("50"), DIAMOND, root.address);
     }
-    expect(await ecosystem.isUserCapped(root.address)).to.equal(true);
+    expect(await ecosystem.totalEarned(root.address)).to.be.gte(await ecosystem.totalCap(root.address));
     const beforeCap = await ecosystem.totalCap(root.address);
     await ecosystem.connect(root).reTopup();
     expect(await ecosystem.totalCap(root.address)).to.equal(beforeCap + U("20"));
@@ -325,8 +492,8 @@ describe("MetaCrownNFTStakeEcosystem", function () {
   });
 
   it("withdraws rewards with 10% deduction", async function () {
-    const { ecosystem, usdt, root, user } = await deployFixture();
-    await ecosystem.connect(root).joinStakePackage(U("1000"), 1, ZERO);
+    const { ecosystem, owner, usdt, root, user } = await deployFixture();
+    await buyFixedNFT(ecosystem, owner, root, U("50"), DIAMOND, ZERO);
     await ecosystem.connect(user).joinStakePackage(U("1000"), 1, root.address);
     const before = await usdt.balanceOf(root.address);
     await ecosystem.connect(root).withdrawRewards(U("50"));
@@ -338,7 +505,7 @@ describe("MetaCrownNFTStakeEcosystem", function () {
   it("exits stake positions with stability deductions and burns NFT", async function () {
     const { ecosystem, usdt, user } = await deployFixture();
     await ecosystem.connect(user).joinStakePackage(U("2000"), 1, ZERO);
-    const tokenId = await ecosystem.tokenOfUser(user.address);
+    const tokenId = await ecosystem.userToTokenId(user.address);
     const before = await usdt.balanceOf(user.address);
     await ecosystem.connect(user).exitStake();
     expect((await usdt.balanceOf(user.address)) - before).to.equal(U("1500"));
@@ -365,10 +532,8 @@ describe("MetaCrownNFTStakeEcosystem", function () {
   it("restricts admin withdrawals and USDT rescue", async function () {
     const { ecosystem, treasury, owner, root, usdt } = await deployFixture();
     await ecosystem.connect(root).joinStakePackage(U("1000"), 1, ZERO);
-    await expect(ecosystem.connect(root).pauseContract()).to.be.reverted;
-    await ecosystem.connect(owner).pauseContract();
-    await ecosystem.connect(owner).unpauseContract();
 
+    await expect(ecosystem.connect(root).withdrawPlatformFees(U("50"))).to.be.reverted;
     await ecosystem.connect(owner).withdrawPlatformFees(U("50"));
     expect(await usdt.balanceOf(treasury.address)).to.be.gt(U("1000000"));
     await expect(ecosystem.connect(owner).emergencyRescueToken(await usdt.getAddress(), owner.address, 1)).to.be.reverted;

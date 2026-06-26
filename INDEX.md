@@ -79,7 +79,8 @@ Welcome to the Meta Crown NFT smart contract system! This document helps you nav
 | [package.json](package.json) | NPM dependencies | No (unless new deps) |
 | [hardhat.config.ts](hardhat.config.ts) | Hardhat config | Yes (networks) |
 | [tsconfig.json](tsconfig.json) | TypeScript config | No |
-| [.env.example](.env.example) | Environment template | Copy & edit as `.env` |
+| [nft-stake/.env](nft-stake/.env) | Contract/deployment env | Fill before deployment |
+| [frontend/.env](frontend/.env) | Frontend env | Fill deployed addresses before build |
 | [.gitignore](.gitignore) | Git ignore rules | No |
 
 ---
@@ -283,9 +284,8 @@ npm test
 
 ### Deployment Error?
 ```bash
-# Check .env file
-cp .env.example .env
-# Edit .env with your values
+# Check env files
+# Edit nft-stake/.env and frontend/.env with your values
 npm run deploy:sepolia
 ```
 

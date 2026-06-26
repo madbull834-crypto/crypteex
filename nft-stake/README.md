@@ -10,7 +10,7 @@ This code controls user funds and implements referral, ROI, pool, deduction, and
 
 - `MetaCrownNFTStakeEcosystem` is the main ERC721 contract. One active NFT represents one active user position.
 - Users can hold either a fixed Meta Crown NFT package or a high-value stake package, not both at the same time.
-- USDT is transferred into the contract with `SafeERC20`; USDT is assumed to use 6 decimals.
+- USDT is transferred into the contract with `SafeERC20`; token units are read from the payment token decimals at deployment. Mock/test tokens can use 6 decimals, while BSC mainnet USDT uses 18 decimals.
 - Rewards are not transferred during joins. They are credited to `userRewardBalance` and later withdrawn through `withdrawRewards`.
 - Sponsor traversal is bounded to 3 levels.
 - Fixed package exit is disabled. Stake package exit uses the stability deduction schedule and burns the NFT.
@@ -23,17 +23,28 @@ Fixed Meta Crown packages:
 | Subscription Plan | Allowed NFT Package | NFT Value | Total Payment |
 | --- | ---: | ---: | ---: |
 | 5 USDT | Silver | 10 USDT | 15 USDT |
-| 10 USDT | Gold | 100 USDT | 110 USDT |
-| 50 USDT | Diamond | 500 USDT | 550 USDT |
+| 10 USDT | Gold | 50 USDT | 60 USDT |
+| 50 USDT | Diamond | 50 USDT | 100 USDT |
 
-The primary purchase function enforces this mapping on-chain:
+The platform uses two separate actions:
 
 ```solidity
-adminMintFixedNFTForSale(packageId) // owner only, auto-lists primary inventory
-buyListedFixedNFT(tokenId, subscriptionPlanAmount, sponsor)
+purchaseSubscription(packageId, sponsor) // one-time category subscription
+adminBulkMintFixedNFTsForSale(packageId, count) // owner only, auto-lists primary inventory
+buyListedFixedNFT(tokenId, minimumOrbdOut, commands, inputs)
 ```
 
-Examples: `5e6` can only buy the 10 USDT Silver NFT, `10e6` can only buy the 100 USDT Gold NFT, and `50e6` can only buy the 500 USDT Diamond NFT.
+Examples: a Silver subscriber can only buy Silver fixed NFTs, a Gold subscriber can only buy Gold fixed NFTs, and a Diamond subscriber can only buy Diamond fixed NFTs. Buying an NFT does not charge another subscription fee.
+
+On BSC mainnet, the deploy script configures an `OrbdSwapLocker`. When it is configured, every primary platform NFT buy sends a package-specific share of the NFT value through PancakeSwap Infinity/Universal Router to buy ORBD and permanently hold the ORBD in the locker contract. The frontend or backend must build the Pancake route off-chain and pass `minimumOrbdOut`, `commands`, and `inputs` into `buyListedFixedNFT`.
+
+ORBD buy share by package:
+
+| Package | NFT Value | ORBD Buy Share |
+| --- | ---: | ---: |
+| Silver | 10 USDT | 5% = 0.5 USDT |
+| Gold | 50 USDT | 10% = 5 USDT |
+| Diamond | 50 USDT | 2% = 1 USDT |
 
 Secondary resale is handled by `MetaCrownNFTMarketplace`:
 
@@ -71,6 +82,7 @@ periods can be claimed for one staking term.
 - Weekly leadership uses `weekId = block.timestamp / 7 days`. Qualification is 2,500 USDT in 3-level team business for that week. Admin closes the week and qualified users claim equal shares.
 - Monthly royalty uses `monthId = block.timestamp / 30 days`. Qualification is 25 active directs plus package-specific direct business. Admin closes the month and members claim equal shares.
 - Fixed package platform split funds weekly and royalty pools. Silver has a documented business-rule conflict because its platform fee is 5 USDT while requested pool funding is 5 + 2 USDT; the contract funds both configured pools and leaves no remaining Silver platform fee.
+- Primary platform NFT purchases on BSC mainnet send the package-specific ORBD buy share to the ORBD swap locker; only the remaining NFT value is added to `totalNFTValueBalance`.
 
 ## Accounting Model
 
@@ -115,11 +127,12 @@ The net stake is returned, deduction goes to `ecosystemStabilityFundBalance`, th
 ## Security Decisions
 
 - Solidity `^0.8.24`
-- OpenZeppelin ERC721, Ownable, Pausable, ReentrancyGuard, SafeERC20
+- OpenZeppelin ERC721, Ownable, ReentrancyGuard, SafeERC20
 - Internal accounting plus withdraw pattern
 - Bounded sponsor loops only
 - Custom errors to keep deployable bytecode below the EVM contract-size limit
-- `viaIR`, optimizer runs `1`, and Cancun EVM target are enabled in Hardhat config
+- `viaIR`, optimizer runs `0`, and Cancun EVM target are enabled in Hardhat config
+- BSC mainnet ORBD purchasing is isolated in `OrbdSwapLocker` so the main ecosystem contract remains below the EVM size limit.
 - No USDT emergency rescue
 
 ## Commands
@@ -138,7 +151,7 @@ npx hardhat test --no-compile
 
 ## Deployment
 
-Create `.env` from `.env.example`, then run:
+Fill `nft-stake/.env`, then run:
 
 ```bash
 npm run deploy -- --network <network>
@@ -147,8 +160,12 @@ npm run deploy -- --network <network>
 Environment variables:
 
 - `USDT_ADDRESS`
+- `ORBD_ADDRESS`
+- `PANCAKE_INFINITY_ROUTER_ADDRESS`
+- `PANCAKE_PERMIT2_ADDRESS`
 - `TREASURY_ADDRESS`
 - `AIRDROP_ADDRESS`
 - `BASE_URI`
 - `SEPOLIA_RPC_URL`
+- `BSC_RPC_URL`
 - `PRIVATE_KEY`

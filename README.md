@@ -35,7 +35,7 @@ Meta Crown NFT is a comprehensive reward ecosystem built on Ethereum, featuring:
 ### Payment Allocation
 
 For every registration:
-- **10% of NFT Value**: Swapped through PancakeSwap Infinity using the USDT → BNB → ORBD smart route
+- **ORBD Buy Share**: Silver uses 5%, Gold uses 10%, and Diamond uses 2% of NFT value for the USDT → BNB → ORBD smart route
 - **Purchased ORBD**: Sent to and permanently held by the MetaCrownNFT contract
 - **Remaining NFT Value**: Stays in the system pool as USDT
 - **Platform Fee**: To treasury wallet
@@ -264,7 +264,12 @@ npm install
 
 ### Environment Configuration
 
-Create `.env` file (copy from `.env.example`):
+Use the two active env files:
+
+- `nft-stake/.env` for contract deployment
+- `frontend/.env` for frontend builds
+
+Contract env example:
 
 ```
 # Network RPC
@@ -292,7 +297,7 @@ for an exact-input USDT → BNB → ORBD route and call:
 join(packageType, sponsor, minimumOrbdOut, commands, inputs)
 ```
 
-The contract grants Permit2 the exact 10% NFT-value allowance only for the
+The contract grants Permit2 the exact package-specific NFT-value allowance only for the
 current transaction, requires an Infinity (`INFI_SWAP`) command, verifies the
 complete USDT amount was spent, verifies `minimumOrbdOut`, and revokes both
 allowances. The live ORBD/native-BNB Infinity CL pool ID is

@@ -16,11 +16,10 @@ Talks directly to the contracts in `../nft-stake/contracts` (deployed under the 
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in addresses below
 npm run dev
 ```
 
-### Required env vars (`.env.local`)
+### Required env vars (`.env`)
 
 | Var | Description |
 | --- | --- |
@@ -29,11 +28,12 @@ npm run dev
 | `VITE_RPC_URL` | RPC endpoint used when adding the network to MetaMask |
 | `VITE_BLOCK_EXPLORER` | Explorer base URL for address/tx links |
 | `VITE_USDT_ADDRESS` | Deployed (mock or real) USDT token address |
+| `VITE_USDT_DECIMALS` | Payment token decimals. Use `18` for BSC mainnet USDT and `6` for local/Sepolia mock USDT. |
 | `VITE_STAKE_ECOSYSTEM_ADDRESS` | Deployed `MetaCrownNFTStakeEcosystem` address |
 | `VITE_MARKETPLACE_ADDRESS` | Deployed `MetaCrownNFTMarketplace` address |
 
-Deploy the contracts first from `../nft-stake` (`npm run deploy:sepolia`, see that project's README), then paste
-the printed addresses here. Until all three addresses are set, the app shows a banner warning that contracts
+Deploy the contracts first from `../nft-stake`, then paste
+the printed addresses into `frontend/.env`. Until all three addresses are set, the app shows a banner warning that contracts
 aren't configured.
 
 ## Updating ABIs

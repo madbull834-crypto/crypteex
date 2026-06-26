@@ -1,6 +1,9 @@
 import { network, run } from "hardhat";
+import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
+
+dotenv.config();
 
 type DeploymentInfo = {
   chainId: number;
@@ -21,7 +24,7 @@ type DeploymentInfo = {
 function loadDeployment(): DeploymentInfo {
   const filePath =
     process.env.DEPLOYMENT_FILE ||
-    path.join(__dirname, "..", "deployments", "sepolia.latest.json");
+    path.join(__dirname, "..", "deployments", `${network.name}.latest.json`);
 
   if (!fs.existsSync(filePath)) {
     throw new Error(`Deployment file not found: ${filePath}`);
@@ -50,19 +53,11 @@ async function verifyContract(contractName: string, address: string, constructor
 }
 
 async function main() {
-  if (network.name !== "sepolia") {
-    throw new Error("This script is for Sepolia only. Run: npm run verify:sepolia");
-  }
-
   if (!process.env.ETHERSCAN_API_KEY) {
-    throw new Error("ETHERSCAN_API_KEY is missing in .env");
+    throw new Error("ETHERSCAN_API_KEY is missing in nft-stake/.env");
   }
 
   const deployment = loadDeployment();
-  if (deployment.chainId !== 11155111) {
-    throw new Error(`Deployment file is not Sepolia. Expected chainId 11155111, got ${deployment.chainId}`);
-  }
-
   const baseURI = process.env.BASE_URI?.trim();
   if (!baseURI) {
     throw new Error("BASE_URI is missing in nft-stake/.env. It must match the value used during deployment.");
@@ -70,14 +65,21 @@ async function main() {
   if (!baseURI.endsWith("/")) {
     throw new Error("BASE_URI must end with /. It must match the value used during deployment.");
   }
+  const zero = "0x0000000000000000000000000000000000000000";
 
   console.log("Using deployment:");
+  console.log("Network:", deployment.network, `(${deployment.chainId})`);
   console.log("USDT:", deployment.contracts.usdt, deployment.contracts.mockUSDT ? "(MockUSDT)" : "(external)");
+  console.log("ORBD locker:", deployment.contracts.orbdSwapLocker || zero);
   console.log("Ecosystem:", deployment.contracts.ecosystem);
   console.log("Marketplace:", deployment.contracts.marketplace);
   console.log("Treasury:", deployment.wallets.treasury);
   console.log("Airdrop:", deployment.wallets.airdrop);
   console.log("Base URI:", baseURI);
+
+  if (deployment.network !== network.name) {
+    throw new Error(`Deployment file is for ${deployment.network}, but Hardhat network is ${network.name}`);
+  }
 
   if (deployment.contracts.mockUSDT) {
     await verifyContract("MockUSDT", deployment.contracts.usdt, []);
@@ -85,12 +87,22 @@ async function main() {
     console.log("\nSkipping USDT verification because deployment uses an external token.");
   }
 
+  const locker = deployment.contracts.orbdSwapLocker || zero;
+  if (locker !== zero) {
+    await verifyContract("OrbdSwapLocker", locker, [
+      deployment.contracts.usdt,
+      process.env.ORBD_ADDRESS,
+      process.env.PANCAKE_INFINITY_ROUTER_ADDRESS,
+      process.env.PANCAKE_PERMIT2_ADDRESS,
+    ]);
+  }
+
   await verifyContract("MetaCrownNFTStakeEcosystem", deployment.contracts.ecosystem, [
     deployment.contracts.usdt,
     deployment.wallets.treasury,
     deployment.wallets.airdrop,
     baseURI,
-    deployment.contracts.orbdSwapLocker || "0x0000000000000000000000000000000000000000",
+    locker,
   ]);
 
   await verifyContract("MetaCrownNFTMarketplace", deployment.contracts.marketplace, [
@@ -98,7 +110,7 @@ async function main() {
     deployment.contracts.ecosystem,
   ]);
 
-  console.log("\nSepolia verification completed.");
+  console.log(`\n${network.name} verification completed.`);
 }
 
 main().catch((error) => {

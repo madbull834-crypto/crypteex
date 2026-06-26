@@ -2,13 +2,14 @@
   "project": "Meta Crown NFT Stake Ecosystem",
   "network": "sepolia",
   "chainId": 11155111,
-  "deployedAt": "2026-06-24T15:18:24.984Z",
+  "deployedAt": "2026-06-25T17:39:38.980Z",
   "deployer": "0x520c92Fc4a05A63B73a412ef0bc2aFdC47d05980",
   "contracts": {
-    "usdt": "0x91619fF5438A42396c8A89faa54ce4a90Bc6007D",
+    "usdt": "0xC573Cde7f4fF081070060bD0C18D7DbD0246DE45",
     "mockUSDT": true,
-    "ecosystem": "0x5f5f53d817aF01E887a2438994e64ba6F31aDc28",
-    "marketplace": "0x16577f70df6b4076c01B16944309F1211B2D390F"
+    "orbdSwapLocker": "0x0000000000000000000000000000000000000000",
+    "ecosystem": "0x6c8eD3180eEefDb643B1e9ab94c372D43ce2Ce93",
+    "marketplace": "0x27bd7cC62DF778080Ad561d59de68cF10A2FDF51"
   },
   "wallets": {
     "treasury": "0x520c92Fc4a05A63B73a412ef0bc2aFdC47d05980",
@@ -17,10 +18,10 @@
   "frontendEnv": {
     "VITE_CHAIN_ID": "11155111",
     "VITE_CHAIN_NAME": "sepolia",
-    "VITE_RPC_URL": "https://rpc.sepolia.org",
+    "VITE_RPC_URL": "https://eth-sepolia.g.alchemy.com/v2/6F1YBfORz_dpNNW8m4bP7",
     "VITE_BLOCK_EXPLORER": "https://sepolia.etherscan.io",
-    "VITE_USDT_ADDRESS": "0x91619fF5438A42396c8A89faa54ce4a90Bc6007D",
-    "VITE_STAKE_ECOSYSTEM_ADDRESS": "0x5f5f53d817aF01E887a2438994e64ba6F31aDc28",
-    "VITE_MARKETPLACE_ADDRESS": "0x16577f70df6b4076c01B16944309F1211B2D390F"
+    "VITE_USDT_ADDRESS": "0xC573Cde7f4fF081070060bD0C18D7DbD0246DE45",
+    "VITE_STAKE_ECOSYSTEM_ADDRESS": "0x6c8eD3180eEefDb643B1e9ab94c372D43ce2Ce93",
+    "VITE_MARKETPLACE_ADDRESS": "0x27bd7cC62DF778080Ad561d59de68cF10A2FDF51"
   }
 }

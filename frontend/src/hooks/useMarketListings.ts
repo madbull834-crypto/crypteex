@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useWeb3 } from "../context/Web3Context";
+import { ENABLE_RESALE_SCAN } from "../config/contracts";
+import { queryRecentEvents } from "../utils/queryEvents";
 
 export interface MarketListing {
   tokenId: bigint;
@@ -21,9 +23,15 @@ export function useMarketListings() {
     let cancelled = false;
 
     async function load() {
+      if (!ENABLE_RESALE_SCAN) {
+        setListings([]);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
-        const listedEvents = await marketplaceRead!.queryFilter(marketplaceRead!.filters.Listed());
+        const listedEvents = await queryRecentEvents(marketplaceRead!, marketplaceRead!.filters.Listed());
         const candidateIds = Array.from(
           new Set(listedEvents.map((e) => (e as unknown as { args: { tokenId: bigint } }).args.tokenId))
         );
@@ -53,6 +61,9 @@ export function useMarketListings() {
         );
 
         if (!cancelled) setListings(withPackages);
+      } catch (err) {
+        console.error("Could not load marketplace listings", err);
+        if (!cancelled) setListings([]);
       } finally {
         if (!cancelled) setLoading(false);
       }

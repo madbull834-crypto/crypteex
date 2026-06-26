@@ -8,14 +8,7 @@ This package deploys the production-facing staking ecosystem contracts:
 
 ## 1. Configure environment
 
-Copy the template:
-
-```bash
-cd nft-stake
-cp .env.example .env
-```
-
-Set at least:
+Use `nft-stake/.env` and set at least:
 
 ```bash
 PRIVATE_KEY=your_admin_private_key
@@ -79,7 +72,7 @@ VITE_STAKE_ECOSYSTEM_ADDRESS=
 VITE_MARKETPLACE_ADDRESS=
 ```
 
-Copy these values into `frontend/.env.local` for testnet frontend testing.
+Copy these values into `frontend/.env` for testnet frontend testing.
 
 ## 4. Admin mint 100 fixed NFTs for sale
 

@@ -5,11 +5,13 @@
 ### 1. JOINING PACKAGES
 
 - [x] Silver package: 10 USDT NFT + 5 USDT fee = 15 USDT total
-- [x] Gold package: 100 USDT NFT + 10 USDT fee = 110 USDT total  
-- [x] Diamond package: 500 USDT NFT + 50 USDT fee = 550 USDT total
+- [x] Gold package: 50 USDT NFT + 10 USDT fee = 60 USDT total  
+- [x] Diamond package: 50 USDT NFT + 50 USDT fee = 100 USDT total
 - [x] User receives/mints one Meta Crown NFT on activation
 - [x] Store user package type, NFT value, sponsor, activation timestamp, active status
 - [x] User cannot join twice (unless re-topup after capping)
+- [x] Admin wallet can be used as sponsor without platform subscription or NFT holder status
+- [x] Admin can activate staking positions for offline-paid users without pulling USDT from the user wallet
 - [x] Referral sponsor must be active (unless root user)
 - [x] Keep permanent wallet subscription IDs separate from tradable NFT token IDs
 - [x] One subscription record per wallet (enforced via addressToUserId mapping)
@@ -334,7 +336,7 @@
   - [x] ERC721 for NFT
   - [x] Ownable for access control
   - [x] ReentrancyGuard for reentrancy protection
-  - [x] Pausable for emergency stop
+  - [x] Contract kept below EVM bytecode size limit for deployment
   - [x] SafeERC20 for token transfers
 
 - [x] TypeScript tests
@@ -342,7 +344,8 @@
 - [x] hardhat.config.ts setup
 - [x] Package.json with dependencies
 - [x] tsconfig.json
-- [x] .env.example
+- [x] Single contract env: nft-stake/.env
+- [x] Single frontend env: frontend/.env
 
 ---
 
@@ -356,7 +359,7 @@
 - [x] Incorrect reward calculations prevented (verified calculations)
 - [x] All values configurable (packages, wallets, URIs)
 - [x] No unsafe assumptions hardcoded
-- [x] USDT 6-decimal handling verified
+- [x] Payment-token decimals handled dynamically and BSC USDT 18-decimal path verified
 - [x] Basis point system (prevents rounding errors)
 
 ---
@@ -388,7 +391,8 @@
 - [x] README.md
 - [x] QUICKSTART.md
 - [x] ARCHITECTURE.md
-- [x] .env.example
+- [x] nft-stake/.env
+- [x] frontend/.env
 - [x] .gitignore
 
 ---

@@ -1,4 +1,4 @@
-import { BrowserProvider, JsonRpcSigner, Contract } from "ethers";
+import { BrowserProvider, JsonRpcProvider, JsonRpcSigner, Contract } from "ethers";
 import {
   createContext,
   useCallback,
@@ -13,6 +13,7 @@ import {
   CHAIN_ID_HEX,
   CHAIN_NAME,
   MARKETPLACE_ADDRESS,
+  NATIVE_CURRENCY,
   RPC_URL,
   STAKE_ECOSYSTEM_ADDRESS,
   USDT_ADDRESS,
@@ -191,7 +192,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
               chainId: CHAIN_ID_HEX,
               chainName: CHAIN_NAME,
               rpcUrls: [RPC_URL],
-              nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+              nativeCurrency: NATIVE_CURRENCY,
             }],
           });
         }
@@ -230,7 +231,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
               chainId: CHAIN_ID_HEX,
               chainName: CHAIN_NAME,
               rpcUrls: [RPC_URL],
-              nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+              nativeCurrency: NATIVE_CURRENCY,
             },
           ],
         });
@@ -270,10 +271,13 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     if (!injectedProvider) return;
     const browserProvider = new BrowserProvider(injectedProvider);
     setProvider(browserProvider);
-    browserProvider.listAccounts().then((accounts) => {
-      if (accounts.length > 0) refreshSigner(browserProvider);
-      else browserProvider.getNetwork().then((n) => setChainId(Number(n.chainId)));
-    });
+    browserProvider
+      .listAccounts()
+      .then((accounts) => {
+        if (accounts.length > 0) refreshSigner(browserProvider);
+        else browserProvider.getNetwork().then((n) => setChainId(Number(n.chainId))).catch(() => undefined);
+      })
+      .catch(() => undefined);
 
     const handleAccountsChanged = () => refreshSigner(browserProvider);
     const handleChainChanged = () => window.location.reload();
@@ -301,17 +305,19 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     [signer]
   );
 
+  const readProvider = useMemo(() => new JsonRpcProvider(RPC_URL, CHAIN_ID, { staticNetwork: true }), []);
+
   const ecosystemRead = useMemo(
-    () => (provider && STAKE_ECOSYSTEM_ADDRESS ? new Contract(STAKE_ECOSYSTEM_ADDRESS, stakeEcosystemAbi, provider) : null),
-    [provider]
+    () => (STAKE_ECOSYSTEM_ADDRESS ? new Contract(STAKE_ECOSYSTEM_ADDRESS, stakeEcosystemAbi, readProvider) : null),
+    [readProvider]
   );
   const marketplaceRead = useMemo(
-    () => (provider && MARKETPLACE_ADDRESS ? new Contract(MARKETPLACE_ADDRESS, marketplaceAbi, provider) : null),
-    [provider]
+    () => (MARKETPLACE_ADDRESS ? new Contract(MARKETPLACE_ADDRESS, marketplaceAbi, readProvider) : null),
+    [readProvider]
   );
   const usdtRead = useMemo(
-    () => (provider && USDT_ADDRESS ? new Contract(USDT_ADDRESS, usdtAbi, provider) : null),
-    [provider]
+    () => (USDT_ADDRESS ? new Contract(USDT_ADDRESS, usdtAbi, readProvider) : null),
+    [readProvider]
   );
 
   const value: Web3State = {

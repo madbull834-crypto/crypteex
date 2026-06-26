@@ -4,15 +4,18 @@
   "description": "Meta Crown NFT - Production Grade Smart Contract System",
   "main": "index.js",
   "scripts": {
-    "compile": "hardhat compile",
-    "test": "hardhat test",
-    "test:gas": "REPORT_GAS=true hardhat test",
-    "deploy": "hardhat run scripts/deploy.ts --network localhost",
-    "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
-    "deploy:bsc": "hardhat run scripts/deploy.ts --network bsc",
+    "compile": "npm --prefix nft-stake run compile",
+    "test": "npm --prefix nft-stake test",
+    "test:gas": "npm --prefix nft-stake run test:gas",
+    "deploy": "npm --prefix nft-stake run deploy:local",
+    "deploy:sepolia": "npm --prefix nft-stake run deploy:sepolia",
+    "deploy:bsc": "npm --prefix nft-stake run deploy:bsc",
+    "preflight:bsc": "npm --prefix nft-stake run preflight:bsc",
+    "verify:bsc": "npm --prefix nft-stake run verify:bsc",
+    "mint:admin:bsc": "npm --prefix nft-stake run mint:admin:bsc",
+    "sync:frontend-abi": "npm --prefix nft-stake run sync:frontend-abi",
     "deploy:frontend:nginx": "bash scripts/deploy-frontend-nginx.sh",
-    "node": "hardhat node",
-    "flatten": "hardhat flatten contracts/MetaCrownNFT.sol > flattened/MetaCrownNFT.flat.sol"
+    "node": "npm --prefix nft-stake run node"
   },
   "keywords": [
     "solidity",

@@ -1,0 +1,19 @@
+{
+  "name": "Meta Crown Silver NFT",
+  "description": "Meta Crown Silver NFT membership artwork.",
+  "image": "ipfs://bafybeibu2wsvvwkinrw6zk6xgpdqs5tlvalvx65qran2fz3uwsw4f5kiiu",
+  "attributes": [
+    {
+      "trait_type": "Tier",
+      "value": "Silver"
+    },
+    {
+      "trait_type": "Collection",
+      "value": "Meta Crown"
+    },
+    {
+      "trait_type": "Utility",
+      "value": "Subscription, Marketplace, Staking Ecosystem"
+    }
+  ]
+}

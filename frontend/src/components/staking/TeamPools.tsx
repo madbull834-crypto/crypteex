@@ -20,17 +20,18 @@ export function TeamPools() {
   useEffect(() => {
     if (!ecosystemRead || !account) return;
     (async () => {
-      const [dc, db, tb, boost, royalty] = await Promise.all([
-        ecosystemRead.getDirectCount(account),
-        ecosystemRead.getDirectBusiness(account),
-        ecosystemRead.getTeamBusiness(account),
-        ecosystemRead.getUserRewardBoost(account),
-        ecosystemRead.isRoyaltyMember(account),
+      const [dc, db, tb, user, royalty] = await Promise.all([
+        ecosystemRead.activeDirectCount(account),
+        ecosystemRead.totalDirectBusiness(account),
+        ecosystemRead.totalTeamBusiness(account),
+        ecosystemRead.getUser(account),
+        ecosystemRead.royaltyMember(account),
       ]);
+      const ownValue = Number(user.positionType) === 2 ? user.stakeAmount : user.nftValue;
       setDirectCount(dc);
       setDirectBusiness(db);
       setTeamBusiness(tb);
-      setBoostBps(Number(boost));
+      setBoostBps(ownValue === 0n ? 0 : tb >= ownValue * 10n ? 200 : tb >= ownValue * 3n ? 100 : 0);
       setIsRoyalty(royalty);
     })();
   }, [ecosystemRead, account]);

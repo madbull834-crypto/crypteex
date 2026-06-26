@@ -5,6 +5,8 @@ import { JoinStakeForm } from "../components/staking/JoinStakeForm";
 import { PositionDashboard } from "../components/staking/PositionDashboard";
 import { TeamPools } from "../components/staking/TeamPools";
 import { formatUsdt } from "../utils/format";
+import { ReferralPanel } from "../components/ReferralPanel";
+import { AdminOfflineStakePanel } from "../components/staking/AdminOfflineStakePanel";
 
 export default function Staking() {
   const { stakePackages, loading } = usePackages();
@@ -23,6 +25,8 @@ export default function Staking() {
           90 days, 15% before 180 days, and a flat 5% from day 180 onward for the remainder of the term.
         </p>
       </section>
+
+      <ReferralPanel />
 
       <section>
         <h2 className="mb-4 text-xl font-semibold text-neutral-900">Stake Packages</h2>
@@ -44,6 +48,10 @@ export default function Staking() {
       <section>
         <h2 className="mb-4 text-xl font-semibold text-neutral-900">My Position</h2>
         <PositionDashboard />
+      </section>
+
+      <section>
+        <AdminOfflineStakePanel stakePackages={stakePackages} />
       </section>
 
       <section>

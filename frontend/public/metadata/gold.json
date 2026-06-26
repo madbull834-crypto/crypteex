@@ -1,0 +1,19 @@
+{
+  "name": "Meta Crown Gold NFT",
+  "description": "Meta Crown Gold NFT membership artwork.",
+  "image": "ipfs://bafybeiggd5ccmbow5ao676qmvhiakyr4lbsrs6srxn3az4znc6mb42pgae",
+  "attributes": [
+    {
+      "trait_type": "Tier",
+      "value": "Gold"
+    },
+    {
+      "trait_type": "Collection",
+      "value": "Meta Crown"
+    },
+    {
+      "trait_type": "Utility",
+      "value": "Subscription, Marketplace, Staking Ecosystem"
+    }
+  ]
+}

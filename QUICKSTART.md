@@ -97,13 +97,12 @@ npx hardhat coverage    # Generate coverage report
 
 ### Setup Environment
 
-Create `.env` file:
+Use the two active env files:
 
-```bash
-cp .env.example .env
-```
+- `nft-stake/.env` for contracts/deployment
+- `frontend/.env` for frontend builds
 
-Edit `.env`:
+Edit `nft-stake/.env`:
 
 ```
 SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY

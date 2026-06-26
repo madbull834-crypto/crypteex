@@ -22,7 +22,8 @@ Crypetx/
 ├── QUICKSTART.md                     # Quick setup guide
 ├── ARCHITECTURE.md                   # Technical deep dive
 ├── REQUIREMENTS_CHECKLIST.md         # Implementation verification
-├── .env.example                      # Environment template
+├── nft-stake/.env                    # Contract/deployment env
+├── frontend/.env                     # Frontend env
 ├── .gitignore                        # Git ignore rules
 └── node_modules/                     # Dependencies (post-install)
 ```
@@ -173,15 +174,18 @@ Verification of all requirements:
 - Tech stack ✅
 - Security measures ✅
 
-#### **.env.example**
-Environment variable template:
+#### **Environment files**
+The project uses two active env files:
+
+- `nft-stake/.env` for contract deployment
+- `frontend/.env` for frontend builds
+
+They contain:
 - RPC URLs
 - Private keys
 - USDT address
 - Wallet addresses
 - Gas reporting flag
-
-Copy and configure: `cp .env.example .env`
 
 #### **.gitignore**
 Git ignore patterns for:

@@ -6,8 +6,10 @@ const DEFAULT_USDT = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 async function main() {
   const signers = await ethers.getSigners();
   const owner = signers[0];
-  const ecosystemAddress = process.env.STAKE_ECOSYSTEM_ADDRESS || DEFAULT_ECOSYSTEM;
-  const usdtAddress = process.env.USDT_ADDRESS || DEFAULT_USDT;
+  const network = await ethers.provider.getNetwork();
+  const isLocal = network.chainId === 31337n || network.chainId === 1337n;
+  const ecosystemAddress = isLocal ? DEFAULT_ECOSYSTEM : (process.env.STAKE_ECOSYSTEM_ADDRESS || DEFAULT_ECOSYSTEM);
+  const usdtAddress = isLocal ? DEFAULT_USDT : (process.env.USDT_ADDRESS || DEFAULT_USDT);
 
   const ecosystem = await ethers.getContractAt(
     "MetaCrownNFTStakeEcosystem",
@@ -24,8 +26,12 @@ async function main() {
   const counts = [0, 0, 0, 0];
   for (let i = 0; i < nftCount; ++i) {
     const packageId = (i % 3) + 1;
-    await (await ecosystem.adminMintFixedNFTForSale(packageId)).wait();
     counts[packageId] += 1;
+  }
+  for (let packageId = 1; packageId <= 3; ++packageId) {
+    if (counts[packageId] > 0) {
+      await (await ecosystem.adminBulkMintFixedNFTsForSale(packageId, counts[packageId])).wait();
+    }
   }
 
   const testBalance = ethers.parseUnits("100000", 6);

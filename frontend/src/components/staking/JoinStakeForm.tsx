@@ -7,6 +7,7 @@ import { useUserPosition } from "../../hooks/useUserPosition";
 import type { StakePackageInfo } from "../../hooks/usePackages";
 import { formatUsdt, parseUsdt } from "../../utils/format";
 import { STAKE_ECOSYSTEM_ADDRESS } from "../../config/contracts";
+import { isSelfReferral, referralFromUrl } from "../../utils/referral";
 
 export function JoinStakeForm({
   stakePackages,
@@ -18,7 +19,7 @@ export function JoinStakeForm({
   const { account, ecosystem, usdt, connect } = useWeb3();
   const { usdtAllowance, usdtBalance, refetch } = useUserPosition();
   const [amount, setAmount] = useState(presetAmount ?? "");
-  const [sponsor, setSponsor] = useState("");
+  const [sponsor, setSponsor] = useState(() => referralFromUrl());
 
   useEffect(() => {
     if (presetAmount !== undefined) setAmount(presetAmount);
@@ -44,7 +45,7 @@ export function JoinStakeForm({
 
   const totalDue = matchedPackage ? amountWei + matchedPackage.platformFee : 0n;
   const needsApproval = usdtAllowance < totalDue;
-  const sponsorValid = sponsor === "" || isAddress(sponsor);
+  const sponsorValid = sponsor === "" || (isAddress(sponsor) && !isSelfReferral(sponsor, account));
   const canJoin = Boolean(matchedPackage) && amountWei > 0n && sponsorValid && !needsApproval;
 
   if (!account) {
@@ -93,7 +94,11 @@ export function JoinStakeForm({
           placeholder="0x..."
           className="rounded-lg border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 outline-none focus:border-amber-500"
         />
-        {!sponsorValid && <span className="text-xs text-rose-600">Invalid address</span>}
+        {!sponsorValid && (
+          <span className="text-xs text-rose-600">
+            {isSelfReferral(sponsor, account) ? "You cannot use your own wallet as sponsor" : "Invalid address"}
+          </span>
+        )}
       </label>
 
       {matchedPackage ? (
