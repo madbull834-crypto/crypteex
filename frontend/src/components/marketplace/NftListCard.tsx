@@ -128,8 +128,11 @@ export function NftListCard({
             Owned by You
           </button>
         ) : !isSubscribed ? (
-          <button disabled className="flex-1 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-700">
-            Subscribe First
+          <button
+            onClick={() => document.getElementById("subscription-panel")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="flex-1 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100"
+          >
+            Subscribe Now
           </button>
         ) : !canBuy ? (
           <button

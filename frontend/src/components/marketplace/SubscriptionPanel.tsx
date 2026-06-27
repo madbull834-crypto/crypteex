@@ -1,13 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { isAddress, MaxUint256, ZeroAddress } from "ethers";
 import { Card } from "../Card";
 import { TxButton } from "../TxButton";
 import { useWeb3 } from "../../context/Web3Context";
-import { useUserPosition } from "../../hooks/useUserPosition";
 import { formatUsdt } from "../../utils/format";
 import { PACKAGE_NAMES, STAKE_ECOSYSTEM_ADDRESS } from "../../config/contracts";
 import type { FixedPackageInfo } from "../../hooks/usePackages";
-import { isSelfReferral, referralFromUrl } from "../../utils/referral";
+import { clearStoredReferral, isSelfReferral, referralFromUrl } from "../../utils/referral";
 
 export function SubscriptionPanel({
   packages,
@@ -18,11 +17,52 @@ export function SubscriptionPanel({
   subscriptions: Record<number, boolean>;
   onChanged: () => void;
 }) {
-  const { account, ecosystem, usdt, connect } = useWeb3();
-  const { usdtAllowance, refetch } = useUserPosition();
+  const { account, ecosystem, ecosystemRead, usdt, usdtRead, connect } = useWeb3();
   const detectedSponsor = useMemo(() => referralFromUrl(), []);
   const [sponsor, setSponsor] = useState(detectedSponsor);
+  const [usdtAllowance, setUsdtAllowance] = useState(0n);
+  const [allowanceTick, setAllowanceTick] = useState(0);
+  const [sponsorCanRefer, setSponsorCanRefer] = useState<boolean | null>(null);
   const sponsorValid = sponsor === "" || (isAddress(sponsor) && !isSelfReferral(sponsor, account));
+  const sponsorEligible = sponsor === "" || sponsorCanRefer === true;
+
+  useEffect(() => {
+    if (!account || !usdtRead) {
+      setUsdtAllowance(0n);
+      return;
+    }
+    let cancelled = false;
+    usdtRead
+      .allowance(account, STAKE_ECOSYSTEM_ADDRESS)
+      .then((value: bigint) => {
+        if (!cancelled) setUsdtAllowance(value);
+      })
+      .catch(() => {
+        if (!cancelled) setUsdtAllowance(0n);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [account, usdtRead, allowanceTick]);
+
+  useEffect(() => {
+    if (!sponsor || !sponsorValid || !ecosystemRead) {
+      setSponsorCanRefer(null);
+      return;
+    }
+    let cancelled = false;
+    ecosystemRead
+      .canRefer(sponsor)
+      .then((eligible: boolean) => {
+        if (!cancelled) setSponsorCanRefer(eligible);
+      })
+      .catch(() => {
+        if (!cancelled) setSponsorCanRefer(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sponsor, sponsorValid, ecosystemRead]);
 
   if (!account) {
     return (
@@ -57,6 +97,23 @@ export function SubscriptionPanel({
             {isSelfReferral(sponsor, account) ? "You cannot use your own wallet as sponsor" : "Invalid sponsor address"}
           </span>
         )}
+        {sponsorValid && sponsor && sponsorCanRefer === false && (
+          <span className="text-xs text-rose-600">
+            This sponsor is not eligible yet. Clear the sponsor field or use an active referrer.
+          </span>
+        )}
+        {sponsor && (
+          <button
+            type="button"
+            onClick={() => {
+              clearStoredReferral();
+              setSponsor("");
+            }}
+            className="w-fit text-xs font-medium text-amber-700 hover:text-amber-800"
+          >
+            Clear sponsor
+          </button>
+        )}
       </label>
       <div className="grid gap-4 sm:grid-cols-3">
         {packages.map((pkg) => {
@@ -74,17 +131,17 @@ export function SubscriptionPanel({
                   variant="secondary"
                   onClick={() => usdt!.approve(STAKE_ECOSYSTEM_ADDRESS, MaxUint256)}
                   successMessage="USDT approved for subscription"
-                  onSuccess={refetch}
+                  onSuccess={() => setAllowanceTick((value) => value + 1)}
                 >
                   Approve USDT
                 </TxButton>
               ) : (
                 <TxButton
-                  disabled={!sponsorValid}
+                  disabled={!sponsorValid || !sponsorEligible}
                   onClick={() => ecosystem!.purchaseSubscription(pkg.id, sponsor || ZeroAddress)}
                   successMessage={`${PACKAGE_NAMES[pkg.id]} subscription activated`}
                   onSuccess={() => {
-                    refetch();
+                    setAllowanceTick((value) => value + 1);
                     onChanged();
                   }}
                 >

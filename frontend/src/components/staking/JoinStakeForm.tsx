@@ -7,7 +7,7 @@ import { useUserPosition } from "../../hooks/useUserPosition";
 import type { StakePackageInfo } from "../../hooks/usePackages";
 import { formatUsdt, parseUsdt } from "../../utils/format";
 import { STAKE_ECOSYSTEM_ADDRESS } from "../../config/contracts";
-import { isSelfReferral, referralFromUrl } from "../../utils/referral";
+import { clearStoredReferral, isSelfReferral, referralFromUrl } from "../../utils/referral";
 
 export function JoinStakeForm({
   stakePackages,
@@ -16,10 +16,11 @@ export function JoinStakeForm({
   stakePackages: StakePackageInfo[];
   presetAmount?: string;
 }) {
-  const { account, ecosystem, usdt, connect } = useWeb3();
+  const { account, ecosystem, ecosystemRead, usdt, connect } = useWeb3();
   const { usdtAllowance, usdtBalance, refetch } = useUserPosition();
   const [amount, setAmount] = useState(presetAmount ?? "");
   const [sponsor, setSponsor] = useState(() => referralFromUrl());
+  const [sponsorCanRefer, setSponsorCanRefer] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (presetAmount !== undefined) setAmount(presetAmount);
@@ -46,7 +47,27 @@ export function JoinStakeForm({
   const totalDue = matchedPackage ? amountWei + matchedPackage.platformFee : 0n;
   const needsApproval = usdtAllowance < totalDue;
   const sponsorValid = sponsor === "" || (isAddress(sponsor) && !isSelfReferral(sponsor, account));
-  const canJoin = Boolean(matchedPackage) && amountWei > 0n && sponsorValid && !needsApproval;
+  const sponsorEligible = sponsor === "" || sponsorCanRefer === true;
+  const canJoin = Boolean(matchedPackage) && amountWei > 0n && sponsorValid && sponsorEligible && !needsApproval;
+
+  useEffect(() => {
+    if (!sponsor || !sponsorValid || !ecosystemRead) {
+      setSponsorCanRefer(null);
+      return;
+    }
+    let cancelled = false;
+    ecosystemRead
+      .canRefer(sponsor)
+      .then((eligible: boolean) => {
+        if (!cancelled) setSponsorCanRefer(eligible);
+      })
+      .catch(() => {
+        if (!cancelled) setSponsorCanRefer(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sponsor, sponsorValid, ecosystemRead]);
 
   if (!account) {
     return (
@@ -98,6 +119,23 @@ export function JoinStakeForm({
           <span className="text-xs text-rose-600">
             {isSelfReferral(sponsor, account) ? "You cannot use your own wallet as sponsor" : "Invalid address"}
           </span>
+        )}
+        {sponsorValid && sponsor && sponsorCanRefer === false && (
+          <span className="text-xs text-rose-600">
+            This sponsor cannot refer yet. Ask them to confirm they are whitelisted and have an active NFT/stake position.
+          </span>
+        )}
+        {sponsor && (
+          <button
+            type="button"
+            onClick={() => {
+              clearStoredReferral();
+              setSponsor("");
+            }}
+            className="w-fit text-xs font-medium text-amber-700 hover:text-amber-800"
+          >
+            Clear sponsor
+          </button>
         )}
       </label>
 

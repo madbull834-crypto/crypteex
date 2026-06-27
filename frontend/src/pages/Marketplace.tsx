@@ -71,7 +71,9 @@ export default function Marketplace() {
         </p>
       </section>
 
-      <SubscriptionPanel packages={fixedPackages} subscriptions={subscriptions} onChanged={refetchSubscriptions} />
+      <section id="subscription-panel">
+        <SubscriptionPanel packages={fixedPackages} subscriptions={subscriptions} onChanged={refetchSubscriptions} />
+      </section>
 
       <ReferralPanel />
 
