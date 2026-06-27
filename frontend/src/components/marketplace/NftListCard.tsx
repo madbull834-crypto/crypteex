@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MaxUint256 } from "ethers";
+import { MaxUint256, ZeroAddress } from "ethers";
 import { Card } from "../Card";
 import { TxButton } from "../TxButton";
 import { NftArt } from "./NftArt";
@@ -9,6 +9,7 @@ import { formatUsdt, parseUsdt, shortenAddress } from "../../utils/format";
 import { PACKAGE_NAMES, STAKE_ECOSYSTEM_ADDRESS, MARKETPLACE_ADDRESS } from "../../config/contracts";
 import type { NftCatalogEntry } from "../../hooks/useNftCatalog";
 import { getOrbdRouteForPlatformBuy } from "../../services/orbdRoute";
+import { isSelfReferral, referralFromUrl } from "../../utils/referral";
 
 const STATUS_BADGE: Record<NftCatalogEntry["status"], string> = {
   platform: "bg-emerald-100 text-emerald-700",
@@ -38,9 +39,12 @@ export function NftListCard({
   const { account, ecosystem, marketplace, usdt, usdtRead, connect } = useWeb3();
   const { user } = useUserPosition();
   const [allowance, setAllowance] = useState(0n);
+  const [subscriptionAllowance, setSubscriptionAllowance] = useState(0n);
   const [sellOpen, setSellOpen] = useState(false);
   const [sellPrice, setSellPrice] = useState("");
   const [allowanceTick, setAllowanceTick] = useState(0);
+  const [sponsor] = useState(() => referralFromUrl());
+  const [sponsorCanRefer, setSponsorCanRefer] = useState<boolean | null>(null);
 
   const spender = entry.status === "platform" ? STAKE_ECOSYSTEM_ADDRESS : MARKETPLACE_ADDRESS;
 
@@ -53,7 +57,30 @@ export function NftListCard({
       .allowance(account, spender)
       .then((a: bigint) => setAllowance(a))
       .catch(() => setAllowance(0n));
+    usdtRead
+      .allowance(account, STAKE_ECOSYSTEM_ADDRESS)
+      .then((a: bigint) => setSubscriptionAllowance(a))
+      .catch(() => setSubscriptionAllowance(0n));
   }, [usdtRead, account, spender, allowanceTick]);
+
+  useEffect(() => {
+    if (!sponsor || !account || isSelfReferral(sponsor, account) || !ecosystem) {
+      setSponsorCanRefer(null);
+      return;
+    }
+    let cancelled = false;
+    ecosystem
+      .canRefer(sponsor)
+      .then((eligible: boolean) => {
+        if (!cancelled) setSponsorCanRefer(eligible);
+      })
+      .catch(() => {
+        if (!cancelled) setSponsorCanRefer(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sponsor, account, ecosystem]);
 
   const isSelfListed = entry.status === "resale" && account?.toLowerCase() === entry.seller.toLowerCase();
   const isOwnedUnlisted = entry.status === "owned";
@@ -61,6 +88,11 @@ export function NftListCard({
   const hasActivePosition = Boolean(user?.active);
   const canBuy = !isMine && !hasActivePosition && isSubscribed;
   const needsApproval = canBuy && allowance < entry.price;
+  const sponsorInvalid = Boolean(sponsor && account && isSelfReferral(sponsor, account));
+  const sponsorIneligible = Boolean(sponsor && sponsorCanRefer === false);
+  const sponsorPending = Boolean(sponsor && sponsorCanRefer === null && !sponsorInvalid);
+  const subscriptionNeedsApproval = !isSubscribed && subscriptionAllowance < entry.platformFee;
+  const canSubscribeFromCard = !sponsorInvalid && !sponsorIneligible && !sponsorPending;
   const canSell = isOwnedUnlisted;
   const canCancel = isSelfListed;
 
@@ -130,12 +162,34 @@ export function NftListCard({
             Owned by You
           </button>
         ) : !isSubscribed ? (
-          <button
-            onClick={() => onSubscribeNeeded?.(entry.packageId)}
-            className="flex-1 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100"
-          >
-            Subscribe Now
-          </button>
+          subscriptionNeedsApproval ? (
+            <TxButton
+              variant="secondary"
+              className="flex-1"
+              onClick={() => usdt!.approve(STAKE_ECOSYSTEM_ADDRESS, MaxUint256)}
+              successMessage="USDT approved for subscription"
+              onSuccess={() => {
+                setAllowanceTick((t) => t + 1);
+                onSubscribeNeeded?.(entry.packageId);
+              }}
+            >
+              Approve Subscription USDT
+            </TxButton>
+          ) : (
+            <TxButton
+              className="flex-1"
+              disabled={!canSubscribeFromCard}
+              onClick={() => ecosystem!.purchaseSubscription(entry.packageId, sponsor || ZeroAddress)}
+              successMessage={`${PACKAGE_NAMES[entry.packageId]} subscription activated`}
+              onSuccess={() => {
+                setAllowanceTick((t) => t + 1);
+                onSubscribeNeeded?.(entry.packageId);
+                onChanged();
+              }}
+            >
+              {sponsorPending ? "Checking Sponsor..." : sponsorInvalid || sponsorIneligible ? "Invalid Sponsor" : "Subscribe Now"}
+            </TxButton>
+          )
         ) : !canBuy ? (
           <button
             disabled

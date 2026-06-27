@@ -146,7 +146,10 @@ export default function Marketplace() {
               <NftListCard
                 key={entry.tokenId.toString()}
                 entry={entry}
-                onChanged={refetch}
+                onChanged={() => {
+                  refetch();
+                  refetchSubscriptions();
+                }}
                 highlight={lowestForSaleTokenId !== null && entry.tokenId === lowestForSaleTokenId}
                 isSubscribed={Boolean(subscriptions[entry.packageId])}
                 onSubscribeNeeded={(packageId) => {
