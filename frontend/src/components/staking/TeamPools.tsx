@@ -8,7 +8,7 @@ const WEEK = 7 * 86400;
 const MONTH = 30 * 86400;
 
 export function TeamPools() {
-  const { ecosystem, ecosystemRead, account } = useWeb3();
+  const { ecosystem, ecosystemRead, rewardPoolsRead, account } = useWeb3();
   const [directCount, setDirectCount] = useState<bigint>(0n);
   const [directBusiness, setDirectBusiness] = useState<bigint>(0n);
   const [teamBusiness, setTeamBusiness] = useState<bigint>(0n);
@@ -18,14 +18,14 @@ export function TeamPools() {
   const [monthId, setMonthId] = useState(String(Math.floor(Date.now() / 1000 / MONTH)));
 
   useEffect(() => {
-    if (!ecosystemRead || !account) return;
+    if (!ecosystemRead || !rewardPoolsRead || !account) return;
     (async () => {
       const [dc, db, tb, user, royalty] = await Promise.all([
         ecosystemRead.activeDirectCount(account),
         ecosystemRead.totalDirectBusiness(account),
         ecosystemRead.totalTeamBusiness(account),
         ecosystemRead.getUser(account),
-        ecosystemRead.royaltyMember(account),
+        rewardPoolsRead.royaltyMember(account),
       ]);
       const ownValue = Number(user.positionType) === 2 ? user.stakeAmount : user.nftValue;
       setDirectCount(dc);
@@ -34,7 +34,7 @@ export function TeamPools() {
       setBoostBps(ownValue === 0n ? 0 : tb >= ownValue * 10n ? 200 : tb >= ownValue * 3n ? 100 : 0);
       setIsRoyalty(royalty);
     })();
-  }, [ecosystemRead, account]);
+  }, [ecosystemRead, rewardPoolsRead, account]);
 
   if (!account) return null;
 

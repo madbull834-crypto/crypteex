@@ -14,6 +14,7 @@ export function AdminOfflineStakePanel({ stakePackages }: { stakePackages: Stake
   const [userAddress, setUserAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [sponsor, setSponsor] = useState("");
+  const [whitelistForReferral, setWhitelistForReferral] = useState(true);
   const [sponsorInitialized, setSponsorInitialized] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -57,6 +58,10 @@ export function AdminOfflineStakePanel({ stakePackages }: { stakePackages: Stake
   const activateOfflineStake = async () => {
     setPending(true);
     try {
+      if (whitelistForReferral) {
+        const whitelistTx = await ecosystem!.whitelistReferralUser(userAddress);
+        await whitelistTx.wait();
+      }
       const tx = await ecosystem!.adminActivateStakePosition(
         userAddress,
         amountWei,
@@ -64,9 +69,22 @@ export function AdminOfflineStakePanel({ stakePackages }: { stakePackages: Stake
         sponsor || ZeroAddress
       );
       await tx.wait();
-      push("success", "Offline stake position activated");
+      push("success", whitelistForReferral ? "User whitelisted and offline stake activated" : "Offline stake position activated");
       setUserAddress("");
       setAmount("");
+    } catch (err) {
+      push("error", parseTxError(err));
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const whitelistExistingUser = async () => {
+    setPending(true);
+    try {
+      const tx = await ecosystem!.whitelistReferralUser(userAddress);
+      await tx.wait();
+      push("success", "User whitelisted for referrals");
     } catch (err) {
       push("error", parseTxError(err));
     } finally {
@@ -80,7 +98,8 @@ export function AdminOfflineStakePanel({ stakePackages }: { stakePackages: Stake
         <h3 className="text-lg font-semibold text-neutral-900">Admin: Add Offline Stake</h3>
         <p className="mt-1 text-sm text-neutral-600">
           Use this when a user paid USDT offline. The contract will create their staking NFT and start ROI from the
-          transaction time. No USDT is pulled from the user wallet.
+          transaction time. No USDT is pulled from the user wallet. Keep referral whitelist enabled when this user
+          should be allowed to refer without buying a subscription.
         </p>
       </div>
 
@@ -129,6 +148,21 @@ export function AdminOfflineStakePanel({ stakePackages }: { stakePackages: Stake
         </label>
       </div>
 
+      <label className="flex items-start gap-3 rounded-lg border border-amber-200 bg-white/70 p-3 text-sm text-neutral-700">
+        <input
+          type="checkbox"
+          checked={whitelistForReferral}
+          onChange={(e) => setWhitelistForReferral(e.target.checked)}
+          className="mt-1 h-4 w-4 rounded border-neutral-300 text-amber-500 focus:ring-amber-500"
+        />
+        <span>
+          <span className="font-medium text-neutral-900">Whitelist this user for referrals</span>
+          <span className="block text-xs text-neutral-500">
+            Admin-only. The user can become a sponsor after this offline stake is activated, without buying a platform subscription.
+          </span>
+        </span>
+      </label>
+
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white/70 p-3 text-sm text-neutral-700">
         <div>
           Recorded principal: <span className="font-medium text-neutral-900">{formatUsdt(amountWei)} USDT</span>
@@ -138,7 +172,14 @@ export function AdminOfflineStakePanel({ stakePackages }: { stakePackages: Stake
           disabled={!canActivate || pending}
           className="rounded-lg bg-gradient-to-r from-amber-400 to-yellow-500 px-4 py-2 text-sm font-semibold text-neutral-900 shadow shadow-amber-300/50 hover:from-amber-300 hover:to-yellow-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {pending ? "Activating..." : "Activate Offline Stake"}
+          {pending ? "Saving..." : whitelistForReferral ? "Whitelist & Activate" : "Activate Offline Stake"}
+        </button>
+        <button
+          onClick={whitelistExistingUser}
+          disabled={!ecosystem || !userValid || pending}
+          className="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Whitelist Existing User
         </button>
       </div>
     </Card>

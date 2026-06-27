@@ -8,9 +8,11 @@ interface ImportMetaEnv {
   readonly VITE_USDT_ADDRESS: string;
   readonly VITE_USDT_DECIMALS?: string;
   readonly VITE_STAKE_ECOSYSTEM_ADDRESS: string;
+  readonly VITE_REWARD_POOLS_ADDRESS?: string;
   readonly VITE_MARKETPLACE_ADDRESS: string;
   readonly VITE_ORBD_ADDRESS?: string;
   readonly VITE_PANCAKE_INFINITY_CL_PATH?: string;
+  readonly VITE_PANCAKE_INFINITY_AMOUNT_OUT_MIN?: string;
   readonly VITE_EVENT_LOOKBACK_BLOCKS?: string;
   readonly VITE_EVENT_CHUNK_BLOCKS?: string;
   readonly VITE_PLATFORM_FIRST_TOKEN_ID?: string;

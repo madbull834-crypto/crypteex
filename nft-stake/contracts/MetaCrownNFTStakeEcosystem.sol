@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 interface IOrbdSwapLocker {
     function swapAndLock(
@@ -16,6 +16,21 @@ interface IOrbdSwapLocker {
         bytes calldata commands,
         bytes[] calldata inputs
     ) external returns (uint256 orbdReceived);
+}
+
+interface IRewardPools {
+    function fundPools() external returns (uint256 weeklyAmount, uint256 royaltyAmount);
+    function recordBusiness(address account, uint256 weekId, uint256 businessValue) external;
+    function maybeUpdateRoyalty(address account, uint256 activeDirects, uint256 totalDirectBusinessAccount, uint256 requiredBusiness) external;
+    function closeWeekly(uint256 weekId) external;
+    function closeMonthly(uint256 monthId) external;
+    function claimWeekly(address account, uint256 weekId) external returns (uint256 amount);
+    function claimRoyalty(address account, uint256 monthId) external returns (uint256 amount);
+    function ecosystem() external view returns (address);
+    function fixedPackages(uint8 packageId) external view returns (uint256 nftValue, uint256 platformFee, bool active);
+    function findStakePackageId(uint256 stakeAmount) external view returns (uint8);
+    function stakePackagePlatformFee(uint8 packageId) external view returns (uint256);
+    function stakePackageRewardRateBps(uint8 packageId) external view returns (uint16);
 }
 
 /**
@@ -36,10 +51,11 @@ interface IOrbdSwapLocker {
  * - Fixed Meta Crown package exit is disabled. Stake package exit is supported with the stability schedule.
  * - Stake ROI is claimable every completed 30-day period for a one-year term.
  */
-contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
+contract MetaCrownNFTStakeEcosystem is ERC721Upgradeable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
 
     error ZeroAddress();
+    error RewardPoolsMismatch();
     error BadPackage();
     error BadPlan();
     error BadAmount();
@@ -50,12 +66,7 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
     error NotStakeUser();
     error NoReward();
     error MonthlyLimit();
-    error AlreadyClaimed();
-    error NotQualified();
     error NotClosed();
-    error AlreadyClosed();
-    error NoQualifiers();
-    error NoMembers();
     error CannotRescueUSDT();
     error NotListed();
     error OnlyMarketplace();
@@ -75,33 +86,21 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
     uint8 private constant POSITION_FIXED = 1;
     uint8 private constant POSITION_STAKE = 2;
 
-    uint256 private immutable usdtUnit;
-    uint256 private immutable weeklyPoolContribution;
-    uint256 private immutable royaltyPoolContribution;
-    uint256 private immutable weeklyQualificationVolume;
-    uint256 private constant ROYALTY_DIRECTS_REQUIRED = 25;
+    uint256 private usdtUnit;
 
-    IERC20 public immutable usdt;
-    address private immutable orbdSwapLocker;
+    IERC20 public usdt;
+    address private orbdSwapLocker;
     address public treasuryWallet;
     address public airdropWallet;
     address public nftMarketplace;
+    IRewardPools public rewardPools;
     mapping(uint8 => string) private packageTokenURIs;
-    uint256 private nextTokenId = 1;
+    uint256 private nextTokenId;
     uint256 public totalUsers;
-    uint256 public royaltyMembersCount;
 
     struct FixedPackage {
         uint256 nftValue;
         uint256 platformFee;
-        bool active;
-    }
-
-    struct StakePackage {
-        uint256 minStake;
-        uint256 maxStake;
-        uint256 platformFee;
-        uint16 rewardRateBps;
         bool active;
     }
 
@@ -122,27 +121,11 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
         uint256 reTopupCount;
     }
 
-    struct WeeklyPool {
-        uint256 poolAmount;
-        uint256 qualifierCount;
-        bool closed;
-        uint256 rewardPerQualifier;
-    }
-
-    struct MonthlyRoyaltyPool {
-        uint256 poolAmount;
-        bool closed;
-        uint256 memberCountSnapshot;
-        uint256 rewardPerMember;
-    }
-
     struct NFTSale {
         uint8 packageId;
         bool active;
     }
 
-    mapping(uint8 => FixedPackage) public fixedPackages;
-    mapping(uint8 => StakePackage) public stakePackages;
     mapping(address => User) private users;
 
     mapping(address => uint256) public userRewardBalance;
@@ -152,21 +135,11 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
     mapping(address => uint256) public totalTeamBusiness;
     mapping(address => uint256) public activeDirectCount;
     mapping(address => uint256) public userToTokenId;
-    mapping(uint256 => address) public tokenToUser;
     mapping(uint256 => uint8) private tokenPackageId;
     mapping(uint256 => NFTSale) public nftSales;
     mapping(address => bool) private subscriberExists;
     mapping(address => mapping(uint8 => bool)) public subscriptions;
     mapping(address => mapping(uint8 => address)) private subscriptionSponsor;
-
-    mapping(address => mapping(uint256 => uint256)) public weeklyTeamVolume;
-    mapping(uint256 => WeeklyPool) public weeklyPools;
-    mapping(address => mapping(uint256 => bool)) public weeklyQualified;
-    mapping(address => mapping(uint256 => bool)) public weeklyClaimed;
-
-    mapping(address => bool) public royaltyMember;
-    mapping(uint256 => MonthlyRoyaltyPool) public monthlyRoyaltyPools;
-    mapping(address => mapping(uint256 => bool)) public royaltyClaimed;
 
     mapping(address => mapping(uint256 => uint256)) public monthlyClaimCount;
     mapping(address => uint256) public lastROIClaimTime;
@@ -182,65 +155,73 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
     uint256 public monthlyRoyaltyPoolBalance;
     uint256 public ecosystemStabilityFundBalance;
 
-    uint16 public withdrawalDeductionBps = 1_000;
-    uint16 public stakeDirectRewardBps = 500;
-    uint16 public level2Bps = 200;
-    uint16 public level3Bps = 100;
-    uint16 public monthlyPassiveBps = 500;
-    uint16 public dailyPassiveBps = 50;
+    uint16 public withdrawalDeductionBps;
+    uint16 public stakeDirectRewardBps;
+    uint16 public level2Bps;
+    uint16 public level3Bps;
+    uint16 public monthlyPassiveBps;
+    uint16 public dailyPassiveBps;
     uint16 private constant BOOSTER_3X_BPS = 100;
     uint16 private constant BOOSTER_10X_BPS = 200;
 
     event UserJoined(address indexed user, uint8 indexed positionType, uint8 indexed packageId, uint256 value, address sponsor, uint256 tokenId);
     event DirectCommissionCredited(address indexed sponsor, address indexed from, uint256 amount, uint16 bps);
-    event DirectRewardCredited(address indexed sponsor, address indexed from, uint256 amount);
     event LevelIncomeCredited(address indexed recipient, address indexed from, uint8 level, uint256 amount);
     event PassiveIncomeClaimed(address indexed user, uint256 amount);
     event ROIRewardClaimed(address indexed user, uint256 amount, uint256 roiPlanId);
     event RewardWithdrawn(address indexed user, uint256 grossAmount, uint256 deductionAmount, uint256 netAmount);
-    event WeeklyPoolFunded(uint256 indexed weekId, uint256 amount);
-    event WeeklyPoolQualified(address indexed user, uint256 indexed weekId, uint256 teamVolume);
-    event WeeklyPoolClosed(uint256 indexed weekId, uint256 poolAmount, uint256 qualifierCount, uint256 rewardPerQualifier);
     event WeeklyPoolClaimed(address indexed user, uint256 indexed weekId, uint256 amount);
-    event RoyaltyQualified(address indexed user);
-    event RoyaltyPoolFunded(uint256 indexed monthId, uint256 amount);
-    event RoyaltyPoolClosed(uint256 indexed monthId, uint256 poolAmount, uint256 memberCount, uint256 rewardPerMember);
     event RoyaltyClaimed(address indexed user, uint256 indexed monthId, uint256 amount);
     event ReTopup(address indexed user, uint256 value, uint256 newCap, uint256 count);
     event Capped(address indexed user, uint256 totalEarned, uint256 totalCap);
     event StakeExited(address indexed user, uint256 stakeAmount, uint256 deductionAmount, uint256 netAmount);
-    event PlatformFeesWithdrawn(address indexed to, uint256 amount);
     event Subscribed(address indexed account, uint8 indexed packageId, uint256 fee, address indexed sponsor);
     event NFTListed(uint256 indexed tokenId, uint8 indexed packageId, uint256 price);
     event NFTSold(uint256 indexed tokenId, address indexed buyer, uint256 price);
 
-    constructor(address usdt_, address treasuryWallet_, address airdropWallet_, string memory baseURI_, address orbdSwapLocker_)
-        ERC721("Meta Crown NFT Stake Ecosystem", "MCNSE")
-        Ownable(msg.sender)
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
+        address usdt_,
+        address treasuryWallet_,
+        address airdropWallet_,
+        string memory baseURI_,
+        address orbdSwapLocker_,
+        address rewardPools_
+    )
+        external
+        initializer
     {
-        if (usdt_ == address(0) || treasuryWallet_ == address(0) || airdropWallet_ == address(0)) revert ZeroAddress();
+        __ERC721_init("Meta Crown NFT Stake Ecosystem", "MCNSE");
+        __Ownable_init(msg.sender);
+        __ReentrancyGuard_init();
+
+        if (usdt_ == address(0) || treasuryWallet_ == address(0) || airdropWallet_ == address(0) || rewardPools_ == address(0)) {
+            revert ZeroAddress();
+        }
         usdt = IERC20(usdt_);
         orbdSwapLocker = orbdSwapLocker_;
         treasuryWallet = treasuryWallet_;
         airdropWallet = airdropWallet_;
+        if (IRewardPools(rewardPools_).ecosystem() != address(this)) revert RewardPoolsMismatch();
+        rewardPools = IRewardPools(rewardPools_);
         packageTokenURIs[PACKAGE_SILVER] = string.concat(baseURI_, "silver.json");
         packageTokenURIs[PACKAGE_GOLD] = string.concat(baseURI_, "gold.json");
         packageTokenURIs[PACKAGE_DIAMOND] = string.concat(baseURI_, "diamond.json");
 
-        uint256 unit = 10 ** IERC20Metadata(usdt_).decimals();
-        usdtUnit = unit;
-        weeklyPoolContribution = 5 * unit;
-        royaltyPoolContribution = 2 * unit;
-        weeklyQualificationVolume = 2_500 * unit;
+        usdtUnit = 10 ** IERC20Metadata(usdt_).decimals();
 
-        fixedPackages[PACKAGE_SILVER] = FixedPackage(10 * unit, 5 * unit, true);
-        fixedPackages[PACKAGE_GOLD] = FixedPackage(50 * unit, 10 * unit, true);
-        fixedPackages[PACKAGE_DIAMOND] = FixedPackage(50 * unit, 50 * unit, true);
-
-        stakePackages[PACKAGE_SILVER] = StakePackage(1_000 * unit, 5_000 * unit, 50 * unit, 400, true);
-        stakePackages[PACKAGE_GOLD] = StakePackage(5_001 * unit, 10_000 * unit, 100 * unit, 500, true);
-        stakePackages[PACKAGE_DIAMOND] = StakePackage(10_001 * unit, type(uint256).max, 100 * unit, 600, true);
-
+        nextTokenId = 1;
+        withdrawalDeductionBps = 1_000;
+        stakeDirectRewardBps = 500;
+        level2Bps = 200;
+        level3Bps = 100;
+        monthlyPassiveBps = 500;
+        dailyPassiveBps = 50;
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
@@ -248,24 +229,24 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
         return packageTokenURIs[tokenPackageId[tokenId]];
     }
 
-    function adminBulkMintFixedNFTsForSale(uint8 packageId, uint16 count) external onlyOwner returns (uint256 firstTokenId) {
-        FixedPackage memory pkg = fixedPackages[packageId];
+    function adminBulkMintFixedNFTsForSale(uint8 packageId, uint16 count) external onlyOwner {
+        FixedPackage memory pkg = _fixedPackage(packageId);
         if (!pkg.active) revert BadPackage();
         if (count == 0) revert BadAmount();
 
-        firstTokenId = nextTokenId;
-        for (uint16 i; i < count; ++i) {
-            uint256 tokenId = nextTokenId++;
+        for (uint16 i; i < count;) {
+            uint256 tokenId; unchecked { tokenId = nextTokenId++; }
             tokenPackageId[tokenId] = packageId;
             _mint(address(this), tokenId);
             nftSales[tokenId] = NFTSale(packageId, true);
 
             emit NFTListed(tokenId, packageId, pkg.nftValue);
+            unchecked { ++i; }
         }
     }
 
     function purchaseSubscription(uint8 packageId, address sponsor) external nonReentrant {
-        FixedPackage memory pkg = fixedPackages[packageId];
+        FixedPackage memory pkg = _fixedPackage(packageId);
         if (!pkg.active) revert BadPackage();
         if (subscriptions[msg.sender][packageId]) revert AlreadySubscribed();
         if (sponsor == msg.sender) revert SelfSponsor();
@@ -287,7 +268,7 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
     ) external nonReentrant {
         NFTSale memory sale = nftSales[tokenId];
         if (!sale.active) revert NotListed();
-        FixedPackage memory pkg = fixedPackages[sale.packageId];
+        FixedPackage memory pkg = _fixedPackage(sale.packageId);
         if (!subscriptions[msg.sender][sale.packageId]) revert NotSubscriber();
         _validateNewPositionFor(msg.sender);
 
@@ -298,6 +279,7 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
         uint256 swapAmount;
         if (orbdSwapLocker != address(0)) {
             swapAmount = (price * _orbdSwapBps(sale.packageId)) / BPS;
+            if (minimumOrbdOut == 0) revert BadAmount();
             usdt.safeTransfer(orbdSwapLocker, swapAmount);
             IOrbdSwapLocker(orbdSwapLocker).swapAndLock(msg.sender, swapAmount, minimumOrbdOut, commands, inputs);
         }
@@ -313,14 +295,16 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
 
     function marketplaceTransferFixedNFT(address seller, address buyer, uint256 tokenId, uint256 price) external {
         if (msg.sender != nftMarketplace) revert OnlyMarketplace();
-        uint8 packageId = users[seller].packageId;
+        uint8 packageId = tokenPackageId[tokenId];
+        if (packageId == 0) revert BadPackage();
         if (!subscriptions[seller][packageId] || !subscriptions[buyer][packageId]) revert NotSubscriber();
         _validateNewPositionFor(buyer);
-        uint256 nftValue = fixedPackages[packageId].nftValue;
+        FixedPackage memory pkg = _fixedPackage(packageId);
+        uint256 nftValue = pkg.nftValue;
         if (users[seller].active && users[seller].positionType == POSITION_FIXED && users[seller].tokenId == tokenId) {
             _transferFixedPosition(seller, buyer, tokenId);
         } else {
-            _activateFixedUserFromToken(buyer, tokenId, packageId, nftValue, fixedPackages[packageId].platformFee, address(0));
+            _activateFixedUserFromToken(buyer, tokenId, packageId, nftValue, pkg.platformFee, address(0));
         }
         _transfer(seller, buyer, tokenId);
         if (price >= nftValue * 2) _mintReplacementNFTs(seller);
@@ -328,7 +312,7 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
 
     function joinStakePackage(uint256 stakeAmount, uint256 roiPlanId, address sponsor) external nonReentrant {
         uint8 packageId = _validateStakeActivation(msg.sender, stakeAmount, roiPlanId, sponsor);
-        uint256 platformFee = stakePackages[packageId].platformFee;
+        uint256 platformFee = rewardPools.stakePackagePlatformFee(packageId);
 
         usdt.safeTransferFrom(msg.sender, address(this), stakeAmount + platformFee);
         _activateStakePosition(msg.sender, packageId, stakeAmount, platformFee, roiPlanId, sponsor);
@@ -342,6 +326,11 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
     {
         uint8 packageId = _validateStakeActivation(account, stakeAmount, roiPlanId, sponsor);
         _activateStakePosition(account, packageId, stakeAmount, 0, roiPlanId, sponsor);
+    }
+
+    function whitelistReferralUser(address account) external onlyOwner {
+        if (account == address(0)) revert ZeroAddress();
+        subscriberExists[account] = true;
     }
 
     function reTopup() external nonReentrant {
@@ -363,7 +352,7 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
         lastROIClaimTime[msg.sender] = block.timestamp;
         roiClaimsCount[msg.sender] = 0;
         user.lastPassiveClaimTime = block.timestamp;
-        user.reTopupCount += 1;
+        unchecked { user.reTopupCount += 1; }
         totalCap[msg.sender] += value * 2;
 
         _processBusinessAndRewards(msg.sender, user.sponsor, value, user.positionType == POSITION_STAKE);
@@ -387,8 +376,10 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
         if (periods == 0) revert NotClosed();
         uint256 amount = pendingROIReward(msg.sender);
         if (amount == 0) revert NoReward();
-        roiClaimsCount[msg.sender] += uint8(periods);
-        lastROIClaimTime[msg.sender] += periods * SECONDS_PER_MONTH;
+        unchecked {
+            roiClaimsCount[msg.sender] += uint8(periods);
+            lastROIClaimTime[msg.sender] += periods * SECONDS_PER_MONTH;
+        }
         if (roiClaimsCount[msg.sender] == MAX_MONTHLY_ROI_CLAIMS) user.roiClaimed = true;
         uint256 credited = _creditReward(msg.sender, amount, 0);
         emit ROIRewardClaimed(msg.sender, credited, user.roiPlanId);
@@ -396,23 +387,15 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
 
     function claimWeeklyLeadershipPool(uint256 weekId) external nonReentrant {
         _useMonthlyClaim(msg.sender);
-        WeeklyPool memory pool = weeklyPools[weekId];
-        if (!pool.closed) revert NotClosed();
-        if (!weeklyQualified[msg.sender][weekId]) revert NotQualified();
-        if (weeklyClaimed[msg.sender][weekId]) revert AlreadyClaimed();
-        weeklyClaimed[msg.sender][weekId] = true;
-        uint256 credited = _creditReward(msg.sender, pool.rewardPerQualifier, 1);
+        uint256 amount = rewardPools.claimWeekly(msg.sender, weekId);
+        uint256 credited = _creditReward(msg.sender, amount, 1);
         emit WeeklyPoolClaimed(msg.sender, weekId, credited);
     }
 
     function claimMonthlyRoyalty(uint256 monthId) external nonReentrant {
         _useMonthlyClaim(msg.sender);
-        MonthlyRoyaltyPool memory pool = monthlyRoyaltyPools[monthId];
-        if (!pool.closed) revert NotClosed();
-        if (!royaltyMember[msg.sender]) revert NotQualified();
-        if (royaltyClaimed[msg.sender][monthId]) revert AlreadyClaimed();
-        royaltyClaimed[msg.sender][monthId] = true;
-        uint256 credited = _creditReward(msg.sender, pool.rewardPerMember, 2);
+        uint256 amount = rewardPools.claimRoyalty(msg.sender, monthId);
+        uint256 credited = _creditReward(msg.sender, amount, 2);
         emit RoyaltyClaimed(msg.sender, monthId, credited);
     }
 
@@ -443,7 +426,6 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
 
         uint256 tokenId = user.tokenId;
         delete userToTokenId[msg.sender];
-        delete tokenToUser[tokenId];
         _burn(tokenId);
 
         usdt.safeTransfer(msg.sender, net);
@@ -451,22 +433,11 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
     }
 
     function closeWeeklyPool(uint256 weekId) external onlyOwner {
-        WeeklyPool storage pool = weeklyPools[weekId];
-        if (pool.closed) revert AlreadyClosed();
-        if (pool.qualifierCount == 0) revert NoQualifiers();
-        pool.closed = true;
-        pool.rewardPerQualifier = pool.poolAmount / pool.qualifierCount;
-        emit WeeklyPoolClosed(weekId, pool.poolAmount, pool.qualifierCount, pool.rewardPerQualifier);
+        rewardPools.closeWeekly(weekId);
     }
 
     function closeMonthlyRoyaltyPool(uint256 monthId) external onlyOwner {
-        MonthlyRoyaltyPool storage pool = monthlyRoyaltyPools[monthId];
-        if (pool.closed) revert AlreadyClosed();
-        if (royaltyMembersCount == 0) revert NoMembers();
-        pool.closed = true;
-        pool.memberCountSnapshot = royaltyMembersCount;
-        pool.rewardPerMember = pool.poolAmount / royaltyMembersCount;
-        emit RoyaltyPoolClosed(monthId, pool.poolAmount, royaltyMembersCount, pool.rewardPerMember);
+        rewardPools.closeMonthly(monthId);
     }
 
     function fundRewardPool(uint256 amount) external nonReentrant {
@@ -494,7 +465,6 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
         if (amount == 0 || amount > platformFeeBalance) revert BadAmount();
         platformFeeBalance -= amount;
         usdt.safeTransfer(treasuryWallet, amount);
-        emit PlatformFeesWithdrawn(treasuryWallet, amount);
     }
 
     function withdrawAirdropDeductionFund(uint256 amount) external onlyOwner nonReentrant {
@@ -535,7 +505,7 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
         if (!user.active || !user.earningActive || user.positionType != POSITION_STAKE || user.roiClaimed) return 0;
         uint256 periods = _claimableROIPeriods(account);
         if (periods == 0) return 0;
-        uint16 monthlyRateBps = stakePackages[user.packageId].rewardRateBps;
+        uint16 monthlyRateBps = rewardPools.stakePackageRewardRateBps(user.packageId);
         return (user.stakeAmount * (monthlyRateBps + _userRewardBoost(account)) * periods) / BPS;
     }
 
@@ -573,6 +543,10 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
         return users[account];
     }
 
+    function canRefer(address account) external view returns (bool) {
+        return _isEligibleSponsor(account);
+    }
+
     function _validateStakeActivation(address account, uint256 stakeAmount, uint256 roiPlanId, address sponsor)
         internal
         view
@@ -580,8 +554,8 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
     {
         if (account == address(0)) revert ZeroAddress();
         if (roiPlanId != 1) revert BadPlan();
-        packageId = _stakePackageId(stakeAmount);
-        if (!stakePackages[packageId].active) revert BadPackage();
+        // findStakePackageId only returns silver/gold/diamond, which rewardPools always keeps active.
+        packageId = rewardPools.findStakePackageId(stakeAmount);
         if (users[account].active || userToTokenId[account] != 0) revert ActivePositionExists();
         if (sponsor == account) revert SelfSponsor();
         if (sponsor != address(0) && !_isEligibleSponsor(sponsor)) revert SponsorNotActive();
@@ -611,13 +585,12 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
         uint256 roiPlanId,
         address sponsor
     ) internal {
-        uint256 tokenId = nextTokenId++;
+        uint256 tokenId; unchecked { tokenId = nextTokenId++; }
         users[account] = User(positionType, packageId, nftValue, stakeAmount, platformFee, roiPlanId, sponsor, block.timestamp, true, true, tokenId, block.timestamp, false, users[account].reTopupCount);
         userToTokenId[account] = tokenId;
-        tokenToUser[tokenId] = account;
         tokenPackageId[tokenId] = packageId;
         totalCap[account] = (positionType == POSITION_STAKE ? stakeAmount : nftValue) * 2;
-        totalUsers += 1;
+        unchecked { totalUsers += 1; }
         if (positionType == POSITION_STAKE) {
             lastROIClaimTime[account] = block.timestamp;
             roiClaimsCount[account] = 0;
@@ -637,10 +610,9 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
     ) internal {
         users[account] = User(POSITION_FIXED, packageId, nftValue, 0, platformFee, 0, sponsor, block.timestamp, true, true, tokenId, block.timestamp, false, users[account].reTopupCount);
         userToTokenId[account] = tokenId;
-        tokenToUser[tokenId] = account;
         tokenPackageId[tokenId] = packageId;
         totalCap[account] = nftValue * 2;
-        totalUsers += 1;
+        unchecked { totalUsers += 1; }
 
         emit UserJoined(account, POSITION_FIXED, packageId, nftValue, sponsor, tokenId);
     }
@@ -656,79 +628,68 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
         sellerUser.active = false;
         sellerUser.earningActive = false;
         delete userToTokenId[seller];
-        delete tokenToUser[tokenId];
 
-        users[buyer] = User(POSITION_FIXED, packageId, nftValue, 0, platformFee, 0, address(0), block.timestamp, true, true, tokenId, block.timestamp, false, users[buyer].reTopupCount);
-        userToTokenId[buyer] = tokenId;
-        tokenToUser[tokenId] = buyer;
-        totalCap[buyer] = nftValue * 2;
-        totalUsers += 1;
-
-        emit UserJoined(buyer, POSITION_FIXED, packageId, nftValue, address(0), tokenId);
+        _activateFixedUserFromToken(buyer, tokenId, packageId, nftValue, platformFee, address(0));
     }
 
     function _mintReplacementNFTs(address account) internal {
         uint8 packageId = users[account].packageId;
-        for (uint8 i = 0; i < 2; ++i) {
-            uint256 tokenId = nextTokenId++;
+        for (uint8 i = 0; i < 2;) {
+            uint256 tokenId; unchecked { tokenId = nextTokenId++; }
             tokenPackageId[tokenId] = packageId;
             _mint(account, tokenId);
+            unchecked { ++i; }
         }
     }
 
     function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
         address from = _ownerOf(tokenId);
-        if (from != address(0) && to != address(0) && to != address(this) && !subscriptions[to][tokenPackageId[tokenId]]) {
-            revert NotSubscriber();
+        if (from != address(0) && to != address(0)) {
+            if (from != address(this) && msg.sender != nftMarketplace) revert OnlyMarketplace();
+            if (to != address(this) && !subscriptions[to][tokenPackageId[tokenId]]) revert NotSubscriber();
         }
         return super._update(to, tokenId, auth);
     }
 
     function _splitFixedPlatformFee(uint256 platformFee) internal {
-        uint256 weekId = block.timestamp / SECONDS_PER_WEEK;
-        uint256 monthId = block.timestamp / SECONDS_PER_MONTH;
-        weeklyPools[weekId].poolAmount += weeklyPoolContribution;
-        monthlyRoyaltyPools[monthId].poolAmount += royaltyPoolContribution;
-        weeklyLeadershipPoolBalance += weeklyPoolContribution;
-        monthlyRoyaltyPoolBalance += royaltyPoolContribution;
-        uint256 poolContribution = weeklyPoolContribution + royaltyPoolContribution;
+        (uint256 weeklyAmount, uint256 royaltyAmount) = rewardPools.fundPools();
+        weeklyLeadershipPoolBalance += weeklyAmount;
+        monthlyRoyaltyPoolBalance += royaltyAmount;
+        uint256 poolContribution = weeklyAmount + royaltyAmount;
         if (platformFee > poolContribution) {
             platformFeeBalance += platformFee - poolContribution;
         }
-        emit WeeklyPoolFunded(weekId, weeklyPoolContribution);
-        emit RoyaltyPoolFunded(monthId, royaltyPoolContribution);
     }
 
     function _processBusinessAndRewards(address buyer, address sponsor, uint256 businessValue, bool isStake) internal {
         if (sponsor == address(0)) return;
 
         if (users[buyer].reTopupCount == 0) {
-            activeDirectCount[sponsor] += 1;
+            unchecked { activeDirectCount[sponsor] += 1; }
             if (users[sponsor].positionType == POSITION_FIXED && activeDirectCount[sponsor] == 2) {
                 users[sponsor].lastPassiveClaimTime = block.timestamp;
             }
         }
         totalDirectBusiness[sponsor] += businessValue;
-        _maybeUpdateRoyalty(sponsor);
+        rewardPools.maybeUpdateRoyalty(sponsor, activeDirectCount[sponsor], totalDirectBusiness[sponsor], _requiredDirectBusiness(users[sponsor].packageId));
 
         uint256 weekId = block.timestamp / SECONDS_PER_WEEK;
         address current = sponsor;
-        for (uint8 level = 1; level <= 3; ++level) {
+        for (uint8 level = 1; level <= 3;) {
             if (current == address(0)) break;
             totalTeamBusiness[current] += businessValue;
-            weeklyTeamVolume[current][weekId] += businessValue;
-            _maybeQualifyWeekly(current, weekId);
+            rewardPools.recordBusiness(current, weekId, businessValue);
 
             uint16 bps = level == 1 ? _directCommissionBps(current, isStake) : (level == 2 ? level2Bps : level3Bps);
             uint256 credited = _creditReward(current, (businessValue * bps) / BPS, 0);
             if (credited > 0) {
                 if (level == 1) {
                     emit DirectCommissionCredited(current, buyer, credited, bps);
-                    if (isStake) emit DirectRewardCredited(current, buyer, credited);
                 }
                 emit LevelIncomeCredited(current, buyer, level, credited);
             }
             current = users[current].sponsor;
+            unchecked { ++level; }
         }
     }
 
@@ -770,15 +731,11 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
     function _useMonthlyClaim(address account) internal {
         uint256 monthId = block.timestamp / SECONDS_PER_MONTH;
         if (monthlyClaimCount[account][monthId] >= 2) revert MonthlyLimit();
-        monthlyClaimCount[account][monthId] += 1;
+        unchecked { monthlyClaimCount[account][monthId] += 1; }
     }
 
-    function _stakePackageId(uint256 stakeAmount) internal view returns (uint8) {
-        for (uint8 packageId = PACKAGE_SILVER; packageId <= PACKAGE_DIAMOND; ++packageId) {
-            StakePackage memory pkg = stakePackages[packageId];
-            if (stakeAmount >= pkg.minStake && stakeAmount <= pkg.maxStake) return packageId;
-        }
-        revert BadAmount();
+    function _fixedPackage(uint8 packageId) internal view returns (FixedPackage memory pkg) {
+        (pkg.nftValue, pkg.platformFee, pkg.active) = rewardPools.fixedPackages(packageId);
     }
 
     function _orbdSwapBps(uint8 packageId) private pure returns (uint16) {
@@ -802,24 +759,6 @@ contract MetaCrownNFTStakeEcosystem is ERC721, Ownable, ReentrancyGuard {
         return 2_500 * usdtUnit;
     }
 
-    function _maybeQualifyWeekly(address account, uint256 weekId) internal {
-        if (!weeklyQualified[account][weekId] && weeklyTeamVolume[account][weekId] >= weeklyQualificationVolume) {
-            weeklyQualified[account][weekId] = true;
-            weeklyPools[weekId].qualifierCount += 1;
-            emit WeeklyPoolQualified(account, weekId, weeklyTeamVolume[account][weekId]);
-        }
-    }
-
-    function _maybeUpdateRoyalty(address account) internal {
-        if (!royaltyMember[account] && activeDirectCount[account] >= ROYALTY_DIRECTS_REQUIRED) {
-            User memory user = users[account];
-            if (totalDirectBusiness[account] >= _requiredDirectBusiness(user.packageId)) {
-                royaltyMember[account] = true;
-                royaltyMembersCount += 1;
-                emit RoyaltyQualified(account);
-            }
-        }
-    }
 
     function _exitDeduction(address account) internal view returns (uint256) {
         User memory user = users[account];

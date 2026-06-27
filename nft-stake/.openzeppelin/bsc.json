@@ -1,0 +1,1291 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0x6c8eD3180eEefDb643B1e9ab94c372D43ce2Ce93",
+      "txHash": "0x2d810d850adf2c2dc55aec9719721b698f1901bf64ed67464a295f9a4810e02c",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x7Ca718fFDdc280bA9c06B787b665be79Bb45d588",
+      "txHash": "0xd3472b2e49553c1dcce8d64725cb37d4e96c7d108a03bca779c3b7c7fbcc3251",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x70dE9D66Eb2f048078931a6907EcECC50ED3002a",
+      "txHash": "0xac0d027880b4bea2274ec0c88ea681c4f66bb034088ce3c2b3c81d40f5f2df0b",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "b5fc6c2047db37d0d94240f6a892299d59c63d760a457d5458866ce176ad71e0": {
+      "address": "0x33ee76Ba608858417C172Ee7cB4285313089e4CF",
+      "txHash": "0x62382853f7e1ff44b1993b659ef1cb96693d11b25a5b11491e53a6ac0b2c971b",
+      "layout": {
+        "solcVersion": "0.8.24",
+        "storage": [
+          {
+            "label": "usdtUnit",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:89"
+          },
+          {
+            "label": "usdt",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IERC20)2048",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:91"
+          },
+          {
+            "label": "orbdSwapLocker",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:92"
+          },
+          {
+            "label": "treasuryWallet",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:93"
+          },
+          {
+            "label": "airdropWallet",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_address",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:94"
+          },
+          {
+            "label": "nftMarketplace",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_address",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:95"
+          },
+          {
+            "label": "rewardPools",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_contract(IRewardPools)7029",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:96"
+          },
+          {
+            "label": "packageTokenURIs",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_uint8,t_string_storage)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:97"
+          },
+          {
+            "label": "nextTokenId",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_uint256",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:98"
+          },
+          {
+            "label": "totalUsers",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_uint256",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:99"
+          },
+          {
+            "label": "users",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_mapping(t_address,t_struct(User)7166_storage)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:129"
+          },
+          {
+            "label": "userRewardBalance",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:131"
+          },
+          {
+            "label": "totalEarned",
+            "offset": 0,
+            "slot": "12",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:132"
+          },
+          {
+            "label": "totalCap",
+            "offset": 0,
+            "slot": "13",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:133"
+          },
+          {
+            "label": "totalDirectBusiness",
+            "offset": 0,
+            "slot": "14",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:134"
+          },
+          {
+            "label": "totalTeamBusiness",
+            "offset": 0,
+            "slot": "15",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:135"
+          },
+          {
+            "label": "activeDirectCount",
+            "offset": 0,
+            "slot": "16",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:136"
+          },
+          {
+            "label": "userToTokenId",
+            "offset": 0,
+            "slot": "17",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:137"
+          },
+          {
+            "label": "tokenPackageId",
+            "offset": 0,
+            "slot": "18",
+            "type": "t_mapping(t_uint256,t_uint8)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:138"
+          },
+          {
+            "label": "nftSales",
+            "offset": 0,
+            "slot": "19",
+            "type": "t_mapping(t_uint256,t_struct(NFTSale)7171_storage)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:139"
+          },
+          {
+            "label": "subscriberExists",
+            "offset": 0,
+            "slot": "20",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:140"
+          },
+          {
+            "label": "subscriptions",
+            "offset": 0,
+            "slot": "21",
+            "type": "t_mapping(t_address,t_mapping(t_uint8,t_bool))",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:141"
+          },
+          {
+            "label": "subscriptionSponsor",
+            "offset": 0,
+            "slot": "22",
+            "type": "t_mapping(t_address,t_mapping(t_uint8,t_address))",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:142"
+          },
+          {
+            "label": "monthlyClaimCount",
+            "offset": 0,
+            "slot": "23",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:144"
+          },
+          {
+            "label": "lastROIClaimTime",
+            "offset": 0,
+            "slot": "24",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:145"
+          },
+          {
+            "label": "roiClaimsCount",
+            "offset": 0,
+            "slot": "25",
+            "type": "t_mapping(t_address,t_uint8)",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:146"
+          },
+          {
+            "label": "totalNFTValueBalance",
+            "offset": 0,
+            "slot": "26",
+            "type": "t_uint256",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:148"
+          },
+          {
+            "label": "totalStakeBalance",
+            "offset": 0,
+            "slot": "27",
+            "type": "t_uint256",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:149"
+          },
+          {
+            "label": "platformFeeBalance",
+            "offset": 0,
+            "slot": "28",
+            "type": "t_uint256",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:150"
+          },
+          {
+            "label": "rewardPoolBalance",
+            "offset": 0,
+            "slot": "29",
+            "type": "t_uint256",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:151"
+          },
+          {
+            "label": "deductionFundBalance",
+            "offset": 0,
+            "slot": "30",
+            "type": "t_uint256",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:152"
+          },
+          {
+            "label": "airdropFundBalance",
+            "offset": 0,
+            "slot": "31",
+            "type": "t_uint256",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:153"
+          },
+          {
+            "label": "weeklyLeadershipPoolBalance",
+            "offset": 0,
+            "slot": "32",
+            "type": "t_uint256",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:154"
+          },
+          {
+            "label": "monthlyRoyaltyPoolBalance",
+            "offset": 0,
+            "slot": "33",
+            "type": "t_uint256",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:155"
+          },
+          {
+            "label": "ecosystemStabilityFundBalance",
+            "offset": 0,
+            "slot": "34",
+            "type": "t_uint256",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:156"
+          },
+          {
+            "label": "withdrawalDeductionBps",
+            "offset": 0,
+            "slot": "35",
+            "type": "t_uint16",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:158"
+          },
+          {
+            "label": "stakeDirectRewardBps",
+            "offset": 2,
+            "slot": "35",
+            "type": "t_uint16",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:159"
+          },
+          {
+            "label": "level2Bps",
+            "offset": 4,
+            "slot": "35",
+            "type": "t_uint16",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:160"
+          },
+          {
+            "label": "level3Bps",
+            "offset": 6,
+            "slot": "35",
+            "type": "t_uint16",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:161"
+          },
+          {
+            "label": "monthlyPassiveBps",
+            "offset": 8,
+            "slot": "35",
+            "type": "t_uint16",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:162"
+          },
+          {
+            "label": "dailyPassiveBps",
+            "offset": 10,
+            "slot": "35",
+            "type": "t_uint16",
+            "contract": "MetaCrownNFTStakeEcosystem",
+            "src": "contracts/MetaCrownNFTStakeEcosystem.sol:163"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_bool))": {
+            "label": "mapping(address => mapping(address => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_address)": {
+            "label": "mapping(uint256 => address)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(ERC721Storage)172_storage": {
+            "label": "struct ERC721Upgradeable.ERC721Storage",
+            "members": [
+              {
+                "label": "_name",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_symbol",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "_owners",
+                "type": "t_mapping(t_uint256,t_address)",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "_balances",
+                "type": "t_mapping(t_address,t_uint256)",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "_tokenApprovals",
+                "type": "t_mapping(t_uint256,t_address)",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "_operatorApprovals",
+                "type": "t_mapping(t_address,t_mapping(t_address,t_bool))",
+                "offset": 0,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_struct(InitializableStorage)73_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)13_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(ReentrancyGuardStorage)493_storage": {
+            "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
+            "members": [
+              {
+                "label": "_status",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(IERC20)2048": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IRewardPools)7029": {
+            "label": "contract IRewardPools",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(address => mapping(uint256 => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint8,t_address))": {
+            "label": "mapping(address => mapping(uint8 => address))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint8,t_bool))": {
+            "label": "mapping(address => mapping(uint8 => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(User)7166_storage)": {
+            "label": "mapping(address => struct MetaCrownNFTStakeEcosystem.User)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint8)": {
+            "label": "mapping(address => uint8)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(NFTSale)7171_storage)": {
+            "label": "mapping(uint256 => struct MetaCrownNFTStakeEcosystem.NFTSale)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint8)": {
+            "label": "mapping(uint256 => uint8)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint8,t_address)": {
+            "label": "mapping(uint8 => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint8,t_bool)": {
+            "label": "mapping(uint8 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint8,t_string_storage)": {
+            "label": "mapping(uint8 => string)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(NFTSale)7171_storage": {
+            "label": "struct MetaCrownNFTStakeEcosystem.NFTSale",
+            "members": [
+              {
+                "label": "packageId",
+                "type": "t_uint8",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "active",
+                "type": "t_bool",
+                "offset": 1,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(User)7166_storage": {
+            "label": "struct MetaCrownNFTStakeEcosystem.User",
+            "members": [
+              {
+                "label": "positionType",
+                "type": "t_uint8",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "packageId",
+                "type": "t_uint8",
+                "offset": 1,
+                "slot": "0"
+              },
+              {
+                "label": "nftValue",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "stakeAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "platformFeePaid",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "roiPlanId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "sponsor",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "activationTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "active",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "earningActive",
+                "type": "t_bool",
+                "offset": 1,
+                "slot": "7"
+              },
+              {
+                "label": "tokenId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "8"
+              },
+              {
+                "label": "lastPassiveClaimTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "9"
+              },
+              {
+                "label": "roiClaimed",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "10"
+              },
+              {
+                "label": "reTopupCount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "11"
+              }
+            ],
+            "numberOfBytes": "384"
+          },
+          "t_uint16": {
+            "label": "uint16",
+            "numberOfBytes": "2"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.ERC721": [
+            {
+              "contract": "ERC721Upgradeable",
+              "label": "_name",
+              "type": "t_string_storage",
+              "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:27",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "ERC721Upgradeable",
+              "label": "_symbol",
+              "type": "t_string_storage",
+              "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:30",
+              "offset": 0,
+              "slot": "1"
+            },
+            {
+              "contract": "ERC721Upgradeable",
+              "label": "_owners",
+              "type": "t_mapping(t_uint256,t_address)",
+              "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:32",
+              "offset": 0,
+              "slot": "2"
+            },
+            {
+              "contract": "ERC721Upgradeable",
+              "label": "_balances",
+              "type": "t_mapping(t_address,t_uint256)",
+              "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:34",
+              "offset": 0,
+              "slot": "3"
+            },
+            {
+              "contract": "ERC721Upgradeable",
+              "label": "_tokenApprovals",
+              "type": "t_mapping(t_uint256,t_address)",
+              "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:36",
+              "offset": 0,
+              "slot": "4"
+            },
+            {
+              "contract": "ERC721Upgradeable",
+              "label": "_operatorApprovals",
+              "type": "t_mapping(t_address,t_mapping(t_address,t_bool))",
+              "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:38",
+              "offset": 0,
+              "slot": "5"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "b35f20f8c4b1b749e5f4aace320f461d39e366e59a2625a0e1de4ddae9fd4c6c": {
+      "address": "0x27bd7cC62DF778080Ad561d59de68cF10A2FDF51",
+      "txHash": "0x87d59fb0ada9d3ca843b784628cf4ba98819c1daa598629190f958d0f69aa29b",
+      "layout": {
+        "solcVersion": "0.8.24",
+        "storage": [
+          {
+            "label": "ecosystem",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:35"
+          },
+          {
+            "label": "weeklyPoolContribution",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:36"
+          },
+          {
+            "label": "royaltyPoolContribution",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:37"
+          },
+          {
+            "label": "weeklyQualificationVolume",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:38"
+          },
+          {
+            "label": "weeklyTeamVolume",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:68"
+          },
+          {
+            "label": "weeklyPools",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_mapping(t_uint256,t_struct(WeeklyPool)11552_storage)",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:69"
+          },
+          {
+            "label": "weeklyQualified",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_bool))",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:70"
+          },
+          {
+            "label": "weeklyClaimed",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_bool))",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:71"
+          },
+          {
+            "label": "royaltyMember",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:73"
+          },
+          {
+            "label": "monthlyRoyaltyPools",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_mapping(t_uint256,t_struct(MonthlyRoyaltyPool)11561_storage)",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:74"
+          },
+          {
+            "label": "royaltyClaimed",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_bool))",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:75"
+          },
+          {
+            "label": "royaltyMembersCount",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_uint256",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:76"
+          },
+          {
+            "label": "fixedPackages",
+            "offset": 0,
+            "slot": "12",
+            "type": "t_mapping(t_uint8,t_struct(FixedPackage)11568_storage)",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:78"
+          },
+          {
+            "label": "stakePackages",
+            "offset": 0,
+            "slot": "13",
+            "type": "t_mapping(t_uint8,t_struct(StakePackage)11579_storage)",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:79"
+          },
+          {
+            "label": "royaltyQualifiedMonth",
+            "offset": 0,
+            "slot": "14",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "MetaCrownRewardPools",
+            "src": "contracts/MetaCrownRewardPools.sol:80"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)73_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)13_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_bool))": {
+            "label": "mapping(address => mapping(uint256 => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(address => mapping(uint256 => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(MonthlyRoyaltyPool)11561_storage)": {
+            "label": "mapping(uint256 => struct MetaCrownRewardPools.MonthlyRoyaltyPool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(WeeklyPool)11552_storage)": {
+            "label": "mapping(uint256 => struct MetaCrownRewardPools.WeeklyPool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint8,t_struct(FixedPackage)11568_storage)": {
+            "label": "mapping(uint8 => struct MetaCrownRewardPools.FixedPackage)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint8,t_struct(StakePackage)11579_storage)": {
+            "label": "mapping(uint8 => struct MetaCrownRewardPools.StakePackage)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(FixedPackage)11568_storage": {
+            "label": "struct MetaCrownRewardPools.FixedPackage",
+            "members": [
+              {
+                "label": "nftValue",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "platformFee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "active",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(MonthlyRoyaltyPool)11561_storage": {
+            "label": "struct MetaCrownRewardPools.MonthlyRoyaltyPool",
+            "members": [
+              {
+                "label": "poolAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "closed",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "memberCountSnapshot",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "rewardPerMember",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(StakePackage)11579_storage": {
+            "label": "struct MetaCrownRewardPools.StakePackage",
+            "members": [
+              {
+                "label": "minStake",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "maxStake",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "platformFee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "rewardRateBps",
+                "type": "t_uint16",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "active",
+                "type": "t_bool",
+                "offset": 2,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(WeeklyPool)11552_storage": {
+            "label": "struct MetaCrownRewardPools.WeeklyPool",
+            "members": [
+              {
+                "label": "poolAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "qualifierCount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "closed",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "rewardPerQualifier",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_uint16": {
+            "label": "uint16",
+            "numberOfBytes": "2"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "6bf66450eda3e28dd44e6a3f9ad370669247810f3e6e9a12e04a90c3e28a6427": {
+      "address": "0xf5E527A15EF96bBF58ACcebFAcd1c6EDBD8F2878",
+      "txHash": "0x21cd333e3b7e798f930730ac87c5327ec5556cf7ec5cfbefbe39f7cedf0311cb",
+      "layout": {
+        "solcVersion": "0.8.24",
+        "storage": [
+          {
+            "label": "usdt",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(IERC20)2048",
+            "contract": "MetaCrownNFTMarketplace",
+            "src": "contracts/MetaCrownNFTMarketplace.sol:30"
+          },
+          {
+            "label": "ecosystem",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IMetaCrownEcosystem)6934",
+            "contract": "MetaCrownNFTMarketplace",
+            "src": "contracts/MetaCrownNFTMarketplace.sol:31"
+          },
+          {
+            "label": "paused",
+            "offset": 20,
+            "slot": "1",
+            "type": "t_bool",
+            "contract": "MetaCrownNFTMarketplace",
+            "src": "contracts/MetaCrownNFTMarketplace.sol:32"
+          },
+          {
+            "label": "listings",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_uint256,t_struct(Listing)6961_storage)",
+            "contract": "MetaCrownNFTMarketplace",
+            "src": "contracts/MetaCrownNFTMarketplace.sol:33"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)73_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)13_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(ReentrancyGuardStorage)493_storage": {
+            "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
+            "members": [
+              {
+                "label": "_status",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(IERC20)2048": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IMetaCrownEcosystem)6934": {
+            "label": "contract IMetaCrownEcosystem",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_uint256,t_struct(Listing)6961_storage)": {
+            "label": "mapping(uint256 => struct MetaCrownNFTMarketplace.Listing)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Listing)6961_storage": {
+            "label": "struct MetaCrownNFTMarketplace.Listing",
+            "members": [
+              {
+                "label": "seller",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "price",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "active",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

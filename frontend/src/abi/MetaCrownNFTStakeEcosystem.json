@@ -1,48 +1,12 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "usdt_",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "treasuryWallet_",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "airdropWallet_",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "baseURI_",
-        "type": "string"
-      },
-      {
-        "internalType": "address",
-        "name": "orbdSwapLocker_",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
   {
     "inputs": [],
     "name": "ActivePositionExists",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "AlreadyClaimed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "AlreadyClosed",
     "type": "error"
   },
   {
@@ -175,17 +139,12 @@
   },
   {
     "inputs": [],
+    "name": "InvalidInitialization",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "MonthlyLimit",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NoMembers",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NoQualifiers",
     "type": "error"
   },
   {
@@ -205,12 +164,12 @@
   },
   {
     "inputs": [],
-    "name": "NotListed",
+    "name": "NotInitializing",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "NotQualified",
+    "name": "NotListed",
     "type": "error"
   },
   {
@@ -253,6 +212,11 @@
   {
     "inputs": [],
     "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RewardPoolsMismatch",
     "type": "error"
   },
   {
@@ -391,25 +355,13 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sponsor",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
       }
     ],
-    "name": "DirectRewardCredited",
+    "name": "Initialized",
     "type": "event"
   },
   {
@@ -537,25 +489,6 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "PlatformFeesWithdrawn",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
         "name": "user",
         "type": "address"
       },
@@ -660,69 +593,6 @@
       }
     ],
     "name": "RoyaltyClaimed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "monthId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "poolAmount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "memberCount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rewardPerMember",
-        "type": "uint256"
-      }
-    ],
-    "name": "RoyaltyPoolClosed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "monthId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "RoyaltyPoolFunded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      }
-    ],
-    "name": "RoyaltyQualified",
     "type": "event"
   },
   {
@@ -881,81 +751,6 @@
     "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "weekId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "poolAmount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "qualifierCount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rewardPerQualifier",
-        "type": "uint256"
-      }
-    ],
-    "name": "WeeklyPoolClosed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "weekId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "WeeklyPoolFunded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "weekId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "teamVolume",
-        "type": "uint256"
-      }
-    ],
-    "name": "WeeklyPoolQualified",
-    "type": "event"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -1016,13 +811,7 @@
       }
     ],
     "name": "adminBulkMintFixedNFTsForSale",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "firstTokenId",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -1115,6 +904,25 @@
     "name": "buyListedFixedNFT",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "canRefer",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1255,35 +1063,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint8",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "name": "fixedPackages",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "nftValue",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "platformFee",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "active",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
@@ -1402,6 +1181,44 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "usdt_",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "treasuryWallet_",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "airdropWallet_",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "baseURI_",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "orbdSwapLocker_",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "rewardPools_",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -1568,40 +1385,6 @@
       {
         "internalType": "uint256",
         "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "monthlyRoyaltyPools",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "poolAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "closed",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "memberCountSnapshot",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "rewardPerMember",
         "type": "uint256"
       }
     ],
@@ -1806,6 +1589,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "rewardPools",
+    "outputs": [
+      {
+        "internalType": "contract IRewardPools",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -1819,62 +1615,6 @@
         "internalType": "uint8",
         "name": "",
         "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "royaltyClaimed",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "royaltyMember",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "royaltyMembersCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1965,45 +1705,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint8",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "name": "stakePackages",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "minStake",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "maxStake",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "platformFee",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint16",
-        "name": "rewardRateBps",
-        "type": "uint16"
-      },
-      {
-        "internalType": "bool",
-        "name": "active",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
         "name": "",
         "type": "address"
@@ -2052,25 +1753,6 @@
         "internalType": "string",
         "name": "",
         "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "tokenToUser",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -2350,30 +2032,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "weeklyClaimed",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "weeklyLeadershipPoolBalance",
     "outputs": [
@@ -2389,83 +2047,14 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "weeklyPools",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "poolAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "qualifierCount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "closed",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "rewardPerQualifier",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
-        "name": "",
+        "name": "account",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
-    "name": "weeklyQualified",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "weeklyTeamVolume",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "whitelistReferralUser",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

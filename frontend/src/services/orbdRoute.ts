@@ -1,6 +1,12 @@
 import { AbiCoder, getAddress, ZeroAddress } from "ethers";
 import { ACTIONS, ACTION_CONSTANTS, ActionsPlanner } from "@pancakeswap/infinity-sdk";
-import { CHAIN_ID, ORBD_ADDRESS, PANCAKE_INFINITY_CL_PATH, USDT_ADDRESS } from "../config/contracts";
+import {
+  CHAIN_ID,
+  ORBD_ADDRESS,
+  PANCAKE_INFINITY_AMOUNT_OUT_MIN,
+  PANCAKE_INFINITY_CL_PATH,
+  USDT_ADDRESS,
+} from "../config/contracts";
 
 export type OrbdRoute = {
   minimumOrbdOut: bigint;
@@ -90,7 +96,7 @@ export async function getOrbdRouteForPlatformBuy(
       currencyIn: asAddress(USDT_ADDRESS, "VITE_USDT_ADDRESS"),
       path: parsePancakeInfinityClPath(PANCAKE_INFINITY_CL_PATH),
       amountIn: swapAmount,
-      amountOutMinimum: 0n,
+      amountOutMinimum: PANCAKE_INFINITY_AMOUNT_OUT_MIN,
     },
   ]);
   planner.add(ACTIONS.TAKE, [
@@ -100,7 +106,7 @@ export async function getOrbdRouteForPlatformBuy(
   ]);
 
   return {
-    minimumOrbdOut: 0n,
+    minimumOrbdOut: PANCAKE_INFINITY_AMOUNT_OUT_MIN,
     commands: "0x10",
     inputs: [abi.encode(["bytes", "bytes[]"], [planner.encodeActions(), planner.encodePlans()])],
   };

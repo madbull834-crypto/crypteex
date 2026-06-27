@@ -4,34 +4,23 @@ import { useWeb3 } from "../context/Web3Context";
 import { useToast } from "../context/ToastContext";
 import { buildReferralLink, referralFromUrl } from "../utils/referral";
 import { shortenAddress } from "../utils/format";
-import { useSubscriptions } from "../hooks/useSubscriptions";
 
 export function ReferralPanel() {
   const { account, connect, ecosystemRead } = useWeb3();
   const { push } = useToast();
-  const { subscriptions } = useSubscriptions();
-  const [nftBalance, setNftBalance] = useState(0n);
-  const [isOwner, setIsOwner] = useState(false);
+  const [canRefer, setCanRefer] = useState(false);
   const detectedSponsor = useMemo(() => referralFromUrl(), []);
-  const hasSubscription = Object.values(subscriptions).some(Boolean);
-  const canRefer = Boolean(account && (isOwner || (hasSubscription && nftBalance > 0n)));
   const referralLink = useMemo(() => (account && canRefer ? buildReferralLink(account) : ""), [account, canRefer]);
 
   useEffect(() => {
     if (!account || !ecosystemRead) {
-      setNftBalance(0n);
-      setIsOwner(false);
+      setCanRefer(false);
       return;
     }
-    Promise.all([ecosystemRead.balanceOf(account), ecosystemRead.owner()])
-      .then(([balance, owner]: [bigint, string]) => {
-        setNftBalance(balance);
-        setIsOwner(owner.toLowerCase() === account.toLowerCase());
-      })
-      .catch(() => {
-        setNftBalance(0n);
-        setIsOwner(false);
-      });
+    ecosystemRead
+      .canRefer(account)
+      .then((eligible: boolean) => setCanRefer(eligible))
+      .catch(() => setCanRefer(false));
   }, [account, ecosystemRead]);
 
   const copyReferralLink = async () => {
@@ -46,8 +35,8 @@ export function ReferralPanel() {
         <div>
           <h2 className="text-lg font-semibold text-neutral-900">Referral Earnings</h2>
           <p className="mt-1 text-sm text-neutral-600">
-            Referral links unlock after your wallet has at least one subscription and holds at least one Crypteex NFT.
-            The admin wallet can refer without subscription/NFT status.
+            Referral links unlock when the contract marks your wallet as eligible: admin wallet, subscribed NFT holder,
+            or admin-whitelisted offline staking user.
           </p>
           {detectedSponsor && (
             <p className="mt-2 text-xs text-emerald-700">
@@ -67,7 +56,7 @@ export function ReferralPanel() {
 
       {account && !canRefer && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          You cannot refer yet. Buy a category subscription and hold a Crypteex NFT first, or connect the admin wallet.
+          You cannot refer yet. Buy a category subscription and hold a Crypteex NFT, ask admin to whitelist your offline stake, or connect the admin wallet.
         </div>
       )}
 

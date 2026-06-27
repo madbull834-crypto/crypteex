@@ -13,6 +13,8 @@ type DeploymentInfo = {
     mockUSDT: boolean;
     orbdSwapLocker?: string;
     ecosystem: string;
+    rewardPools: string;
+    rewardPoolsUnit: string;
     marketplace: string;
   };
   wallets: {
@@ -97,18 +99,12 @@ async function main() {
     ]);
   }
 
-  await verifyContract("MetaCrownNFTStakeEcosystem", deployment.contracts.ecosystem, [
-    deployment.contracts.usdt,
-    deployment.wallets.treasury,
-    deployment.wallets.airdrop,
-    baseURI,
-    locker,
-  ]);
-
-  await verifyContract("MetaCrownNFTMarketplace", deployment.contracts.marketplace, [
-    deployment.contracts.usdt,
-    deployment.contracts.ecosystem,
-  ]);
+  // All three addresses below are Transparent Proxies. hardhat-upgrades patches hardhat-verify
+  // to detect each proxy and verify the underlying implementation (which takes no
+  // constructor arguments) plus the proxy and proxy admin automatically.
+  await verifyContract("MetaCrownNFTStakeEcosystem (proxy)", deployment.contracts.ecosystem, []);
+  await verifyContract("MetaCrownRewardPools (proxy)", deployment.contracts.rewardPools, []);
+  await verifyContract("MetaCrownNFTMarketplace (proxy)", deployment.contracts.marketplace, []);
 
   console.log(`\n${network.name} verification completed.`);
 }

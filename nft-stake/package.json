@@ -12,7 +12,12 @@
     "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
     "deploy:sepolia": "hardhat run scripts/deploy-sepolia.ts --network sepolia",
     "deploy:bsc-testnet": "hardhat run scripts/deploy.ts --network bscTestnet",
+    "deploy:bsc:mainnet": "hardhat run scripts/deploy-bsc-mainnet.ts --network bsc",
     "deploy:bsc": "hardhat run scripts/deploy.ts --network bsc",
+    "upgrade:local": "hardhat run scripts/upgrade.ts --network localhost",
+    "upgrade:sepolia": "hardhat run scripts/upgrade.ts --network sepolia",
+    "upgrade:bsc-testnet": "hardhat run scripts/upgrade.ts --network bscTestnet",
+    "upgrade:bsc": "hardhat run scripts/upgrade.ts --network bsc",
     "sync:frontend-abi": "node scripts/sync-frontend-abi.js",
     "verify:sepolia": "hardhat run scripts/verify-sepolia.ts --network sepolia",
     "verify:bsc-testnet": "hardhat run scripts/verify-deployment.ts --network bscTestnet",
@@ -42,6 +47,7 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.1",
     "@typechain/ethers-v6": "^0.5.0",
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.10",
@@ -59,6 +65,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.1",
+    "@openzeppelin/contracts-upgradeable": "5.1.0",
     "dotenv": "^16.4.5"
   }
 }

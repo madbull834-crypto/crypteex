@@ -70,7 +70,7 @@ contract OrbdSwapLocker is Ownable, ReentrancyGuard {
         bytes[] calldata inputs
     ) external nonReentrant returns (uint256 orbdReceived) {
         if (msg.sender != ecosystem) revert OnlyEcosystem();
-        if (usdtAmount == 0 || usdtAmount > type(uint160).max) revert BadAmount();
+        if (usdtAmount == 0 || minimumOrbdOut == 0 || usdtAmount > type(uint160).max) revert BadAmount();
         if (!_containsInfinitySwap(commands)) revert InfinitySwapRequired();
 
         uint256 usdtBefore = usdt.balanceOf(address(this));
@@ -85,9 +85,7 @@ contract OrbdSwapLocker is Ownable, ReentrancyGuard {
         uint256 usdtSpent = usdtBefore - usdt.balanceOf(address(this));
         orbdReceived = orbd.balanceOf(address(this)) - orbdBefore;
         if (usdtSpent != usdtAmount) revert IncorrectUsdtSpent();
-        if (minimumOrbdOut == 0 ? orbdReceived == 0 : orbdReceived < minimumOrbdOut) {
-            revert InsufficientOrbdReceived();
-        }
+        if (orbdReceived < minimumOrbdOut) revert InsufficientOrbdReceived();
 
         emit OrbdPurchasedAndLocked(buyer, usdtAmount, orbdReceived);
     }

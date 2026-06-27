@@ -20,23 +20,23 @@ export interface FixedPackageInfo {
 const PACKAGE_IDS = [1, 2, 3];
 
 export function usePackages() {
-  const { ecosystemRead } = useWeb3();
+  const { rewardPoolsRead } = useWeb3();
   const [stakePackages, setStakePackages] = useState<StakePackageInfo[]>([]);
   const [fixedPackages, setFixedPackages] = useState<FixedPackageInfo[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!ecosystemRead) return;
+    if (!rewardPoolsRead) return;
     let cancelled = false;
 
     async function load() {
       setLoading(true);
       try {
         const stakeResults = await Promise.all(
-          PACKAGE_IDS.map((id) => ecosystemRead!.stakePackages(id))
+          PACKAGE_IDS.map((id) => rewardPoolsRead!.stakePackages(id))
         );
         const fixedResults = await Promise.all(
-          PACKAGE_IDS.map((id) => ecosystemRead!.fixedPackages(id))
+          PACKAGE_IDS.map((id) => rewardPoolsRead!.fixedPackages(id))
         );
         if (cancelled) return;
         setStakePackages(
@@ -66,7 +66,7 @@ export function usePackages() {
     return () => {
       cancelled = true;
     };
-  }, [ecosystemRead]);
+  }, [rewardPoolsRead]);
 
   return { stakePackages, fixedPackages, loading };
 }

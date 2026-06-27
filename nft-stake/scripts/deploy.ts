@@ -1,4 +1,4 @@
-import { ethers, network } from "hardhat";
+import { ethers, network, upgrades } from "hardhat";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
@@ -138,10 +138,22 @@ export async function deployMetaCrown() {
     console.log("Permit2:", permit2Address);
   }
 
+  // All three contracts are upgradeable proxies. Deploy each one uninitialized first so
+  // they can reference each other's proxy addresses, then initialize in dependency order.
   const Ecosystem = await ethers.getContractFactory("MetaCrownNFTStakeEcosystem");
-  const ecosystem = await Ecosystem.deploy(usdtAddress, treasury, airdrop, baseURI, orbdSwapLockerAddress);
+  const ecosystem = await upgrades.deployProxy(Ecosystem, [], { initializer: false, kind: "transparent" });
   await ecosystem.waitForDeployment();
   const ecosystemAddress = await ecosystem.getAddress();
+
+  const RewardPools = await ethers.getContractFactory("MetaCrownRewardPools");
+  const rewardPools = await upgrades.deployProxy(RewardPools, [], { initializer: false, kind: "transparent" });
+  await rewardPools.waitForDeployment();
+  const rewardPoolsAddress = await rewardPools.getAddress();
+  console.log("MetaCrownRewardPools (proxy):", rewardPoolsAddress);
+
+  const usdtUnit = 10n ** BigInt(usdtDecimals);
+  await (await rewardPools.initialize(ecosystemAddress, usdtUnit)).wait();
+  await (await ecosystem.initialize(usdtAddress, treasury, airdrop, baseURI, orbdSwapLockerAddress, rewardPoolsAddress)).wait();
 
   if (orbdSwapLockerAddress !== ethers.ZeroAddress) {
     const locker = await ethers.getContractAt("OrbdSwapLocker", orbdSwapLockerAddress);
@@ -149,7 +161,7 @@ export async function deployMetaCrown() {
   }
 
   const Marketplace = await ethers.getContractFactory("MetaCrownNFTMarketplace");
-  const marketplace = await Marketplace.deploy(usdtAddress, ecosystemAddress);
+  const marketplace = await upgrades.deployProxy(Marketplace, [usdtAddress, ecosystemAddress], { kind: "transparent" });
   await marketplace.waitForDeployment();
   const marketplaceAddress = await marketplace.getAddress();
 
@@ -166,6 +178,8 @@ export async function deployMetaCrown() {
       mockUSDT: deployedMockUSDT,
       orbdSwapLocker: orbdSwapLockerAddress,
       ecosystem: ecosystemAddress,
+      rewardPools: rewardPoolsAddress,
+      rewardPoolsUnit: usdtUnit.toString(),
       marketplace: marketplaceAddress,
     },
     wallets: {
@@ -180,9 +194,11 @@ export async function deployMetaCrown() {
       VITE_USDT_ADDRESS: usdtAddress,
       VITE_USDT_DECIMALS: String(usdtDecimals),
       VITE_STAKE_ECOSYSTEM_ADDRESS: ecosystemAddress,
+      VITE_REWARD_POOLS_ADDRESS: rewardPoolsAddress,
       VITE_MARKETPLACE_ADDRESS: marketplaceAddress,
       VITE_ORBD_ADDRESS: process.env.VITE_ORBD_ADDRESS || process.env.ORBD_ADDRESS || "",
       VITE_PANCAKE_INFINITY_CL_PATH: process.env.VITE_PANCAKE_INFINITY_CL_PATH || process.env.PANCAKE_INFINITY_CL_PATH || "",
+      VITE_PANCAKE_INFINITY_AMOUNT_OUT_MIN: process.env.VITE_PANCAKE_INFINITY_AMOUNT_OUT_MIN || "1",
       VITE_EVENT_LOOKBACK_BLOCKS: process.env.VITE_EVENT_LOOKBACK_BLOCKS || "50000",
       VITE_EVENT_CHUNK_BLOCKS: process.env.VITE_EVENT_CHUNK_BLOCKS || "1000",
       VITE_PLATFORM_FIRST_TOKEN_ID: process.env.VITE_PLATFORM_FIRST_TOKEN_ID || "0",
@@ -195,7 +211,8 @@ export async function deployMetaCrown() {
   const latestFile = writeDeploymentFile(`${networkName}.latest.json`, deploymentInfo);
 
   console.log("\nDeployment completed.");
-  console.log("MetaCrownNFTStakeEcosystem:", ecosystemAddress);
+  console.log("MetaCrownNFTStakeEcosystem (proxy):", ecosystemAddress);
+  console.log("MetaCrownRewardPools:", rewardPoolsAddress);
   console.log("MetaCrownNFTMarketplace:", marketplaceAddress);
   console.log("USDT:", usdtAddress);
   console.log("Saved:", networkFile);
@@ -210,8 +227,10 @@ export async function deployMetaCrown() {
     if (orbdSwapLockerAddress !== ethers.ZeroAddress) {
       console.log(`npx hardhat verify --network ${networkName} ${orbdSwapLockerAddress} ${usdtAddress} ${process.env.ORBD_ADDRESS} ${process.env.PANCAKE_INFINITY_ROUTER_ADDRESS} ${process.env.PANCAKE_PERMIT2_ADDRESS}`);
     }
-    console.log(`npx hardhat verify --network ${networkName} ${ecosystemAddress} ${usdtAddress} ${treasury} ${airdrop} "${baseURI}" ${orbdSwapLockerAddress}`);
-    console.log(`npx hardhat verify --network ${networkName} ${marketplaceAddress} ${usdtAddress} ${ecosystemAddress}`);
+    console.log("(all three below are proxies; hardhat-upgrades auto-detects and verifies the implementation)");
+    console.log(`npx hardhat verify --network ${networkName} ${ecosystemAddress}`);
+    console.log(`npx hardhat verify --network ${networkName} ${rewardPoolsAddress}`);
+    console.log(`npx hardhat verify --network ${networkName} ${marketplaceAddress}`);
   }
 }
 

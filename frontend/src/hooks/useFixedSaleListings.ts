@@ -36,7 +36,7 @@ async function mapInBatches<T, R>(items: T[], batchSize: number, mapper: (item: 
   return results;
 }
 
-async function loadFixedSaleListings(ecosystemRead: Contract) {
+async function loadFixedSaleListings(ecosystemRead: Contract, rewardPoolsRead: Contract) {
   if (fixedListingsCache) return fixedListingsCache;
   if (fixedListingsPromise) return fixedListingsPromise;
 
@@ -65,7 +65,7 @@ async function loadFixedSaleListings(ecosystemRead: Contract) {
 
     const packageIds = Array.from(new Set(active.map((listing) => listing.packageId)));
     const packages = await mapInBatches(packageIds, 1, async (packageId) => {
-      const pkg = await ecosystemRead.fixedPackages(packageId);
+      const pkg = await rewardPoolsRead.fixedPackages(packageId);
       return [packageId, pkg] as const;
     });
     const packageById = new Map(packages);
@@ -90,7 +90,7 @@ async function loadFixedSaleListings(ecosystemRead: Contract) {
 }
 
 export function useFixedSaleListings() {
-  const { ecosystemRead } = useWeb3();
+  const { ecosystemRead, rewardPoolsRead } = useWeb3();
   const [listings, setListings] = useState<FixedSaleListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
@@ -102,14 +102,15 @@ export function useFixedSaleListings() {
   }, []);
 
   useEffect(() => {
-    if (!ecosystemRead) return;
+    if (!ecosystemRead || !rewardPoolsRead) return;
     const readContract = ecosystemRead;
+    const rewardPoolsContract = rewardPoolsRead;
     let cancelled = false;
 
     async function load() {
       setLoading(true);
       try {
-        const loadedListings = await loadFixedSaleListings(readContract);
+        const loadedListings = await loadFixedSaleListings(readContract, rewardPoolsContract);
         if (!cancelled) setListings(loadedListings);
       } catch (err) {
         console.error("Could not load fixed NFT listings", err);
@@ -123,7 +124,7 @@ export function useFixedSaleListings() {
     return () => {
       cancelled = true;
     };
-  }, [ecosystemRead, tick]);
+  }, [ecosystemRead, rewardPoolsRead, tick]);
 
   return { listings, loading, refetch };
 }

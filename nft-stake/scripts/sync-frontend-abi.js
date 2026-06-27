@@ -31,6 +31,17 @@ const copies = [
       "nft-stake",
       "artifacts",
       "contracts",
+      "MetaCrownRewardPools.sol",
+      "MetaCrownRewardPools.json"
+    ),
+    target: path.join(projectRoot, "frontend", "src", "abi", "MetaCrownRewardPools.json"),
+  },
+  {
+    artifact: path.join(
+      projectRoot,
+      "nft-stake",
+      "artifacts",
+      "contracts",
       "mocks",
       "MockUSDT.sol",
       "MockUSDT.json"

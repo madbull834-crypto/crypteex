@@ -14,12 +14,14 @@ import {
   CHAIN_NAME,
   MARKETPLACE_ADDRESS,
   NATIVE_CURRENCY,
+  REWARD_POOLS_ADDRESS,
   RPC_URL,
   STAKE_ECOSYSTEM_ADDRESS,
   USDT_ADDRESS,
 } from "../config/contracts";
 import stakeEcosystemAbi from "../abi/MetaCrownNFTStakeEcosystem.json";
 import marketplaceAbi from "../abi/MetaCrownNFTMarketplace.json";
+import rewardPoolsAbi from "../abi/MetaCrownRewardPools.json";
 import usdtAbi from "../abi/MockUSDT.json";
 
 interface Web3State {
@@ -38,9 +40,11 @@ interface Web3State {
   switchNetwork: () => Promise<void>;
   ecosystem: Contract | null;
   marketplace: Contract | null;
+  rewardPools: Contract | null;
   usdt: Contract | null;
   ecosystemRead: Contract | null;
   marketplaceRead: Contract | null;
+  rewardPoolsRead: Contract | null;
   usdtRead: Contract | null;
 }
 
@@ -300,6 +304,10 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     () => (signer && MARKETPLACE_ADDRESS ? new Contract(MARKETPLACE_ADDRESS, marketplaceAbi, signer) : null),
     [signer]
   );
+  const rewardPools = useMemo(
+    () => (signer && REWARD_POOLS_ADDRESS ? new Contract(REWARD_POOLS_ADDRESS, rewardPoolsAbi, signer) : null),
+    [signer]
+  );
   const usdt = useMemo(
     () => (signer && USDT_ADDRESS ? new Contract(USDT_ADDRESS, usdtAbi, signer) : null),
     [signer]
@@ -313,6 +321,10 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   );
   const marketplaceRead = useMemo(
     () => (MARKETPLACE_ADDRESS ? new Contract(MARKETPLACE_ADDRESS, marketplaceAbi, readProvider) : null),
+    [readProvider]
+  );
+  const rewardPoolsRead = useMemo(
+    () => (REWARD_POOLS_ADDRESS ? new Contract(REWARD_POOLS_ADDRESS, rewardPoolsAbi, readProvider) : null),
     [readProvider]
   );
   const usdtRead = useMemo(
@@ -336,9 +348,11 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     switchNetwork,
     ecosystem,
     marketplace,
+    rewardPools,
     usdt,
     ecosystemRead,
     marketplaceRead,
+    rewardPoolsRead,
     usdtRead,
   };
 

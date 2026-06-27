@@ -7,9 +7,11 @@ export const BLOCK_EXPLORER = import.meta.env.VITE_BLOCK_EXPLORER ?? "https://se
 
 export const USDT_ADDRESS = import.meta.env.VITE_USDT_ADDRESS ?? "";
 export const STAKE_ECOSYSTEM_ADDRESS = import.meta.env.VITE_STAKE_ECOSYSTEM_ADDRESS ?? "";
+export const REWARD_POOLS_ADDRESS = import.meta.env.VITE_REWARD_POOLS_ADDRESS ?? "";
 export const MARKETPLACE_ADDRESS = import.meta.env.VITE_MARKETPLACE_ADDRESS ?? "";
 export const ORBD_ADDRESS = import.meta.env.VITE_ORBD_ADDRESS ?? "";
 export const PANCAKE_INFINITY_CL_PATH = import.meta.env.VITE_PANCAKE_INFINITY_CL_PATH ?? "";
+export const PANCAKE_INFINITY_AMOUNT_OUT_MIN = BigInt(import.meta.env.VITE_PANCAKE_INFINITY_AMOUNT_OUT_MIN ?? "1");
 export const EVENT_LOOKBACK_BLOCKS = Number(import.meta.env.VITE_EVENT_LOOKBACK_BLOCKS ?? 50_000);
 export const EVENT_CHUNK_BLOCKS = Number(import.meta.env.VITE_EVENT_CHUNK_BLOCKS ?? 10);
 export const PLATFORM_FIRST_TOKEN_ID = Number(import.meta.env.VITE_PLATFORM_FIRST_TOKEN_ID ?? 0);
