@@ -12,10 +12,12 @@ export function SubscriptionPanel({
   packages,
   subscriptions,
   onChanged,
+  selectedPackageId,
 }: {
   packages: FixedPackageInfo[];
   subscriptions: Record<number, boolean>;
   onChanged: () => void;
+  selectedPackageId?: number | null;
 }) {
   const { account, ecosystem, ecosystemRead, usdt, usdtRead, connect } = useWeb3();
   const detectedSponsor = useMemo(() => referralFromUrl(), []);
@@ -119,9 +121,18 @@ export function SubscriptionPanel({
         {packages.map((pkg) => {
           const subscribed = Boolean(subscriptions[pkg.id]);
           const needsApproval = usdtAllowance < pkg.platformFee;
+          const selected = selectedPackageId === pkg.id;
           return (
-            <Card key={pkg.id} className="flex flex-col gap-3">
+            <Card
+              key={pkg.id}
+              className={`flex flex-col gap-3 ${selected ? "border-amber-400 ring-2 ring-amber-200" : ""}`}
+            >
               <h3 className="text-lg font-semibold">{PACKAGE_NAMES[pkg.id]} Subscription</h3>
+              {selected && (
+                <div className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                  Selected package for the NFT you clicked
+                </div>
+              )}
               <div className="text-2xl font-bold text-amber-600">{formatUsdt(pkg.platformFee)} USDT</div>
               <p className="text-sm text-neutral-500">Permanent wallet subscription</p>
               {subscribed ? (

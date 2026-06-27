@@ -27,6 +27,7 @@ export default function Marketplace() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [selectedSubscriptionPackage, setSelectedSubscriptionPackage] = useState<number | null>(null);
 
   const platformCount = entries.filter((e) => e.status === "platform").length;
   const resaleCount = entries.filter((e) => e.status === "resale").length;
@@ -72,10 +73,15 @@ export default function Marketplace() {
       </section>
 
       <section id="subscription-panel">
-        <SubscriptionPanel packages={fixedPackages} subscriptions={subscriptions} onChanged={refetchSubscriptions} />
+        <SubscriptionPanel
+          packages={fixedPackages}
+          subscriptions={subscriptions}
+          selectedPackageId={selectedSubscriptionPackage}
+          onChanged={refetchSubscriptions}
+        />
       </section>
 
-      <ReferralPanel />
+      <ReferralPanel showIneligibleNotice={false} />
 
       <section className="grid gap-4 sm:grid-cols-4">
         <StatCard label="Platform Listings" value={platformCount} />
@@ -143,6 +149,12 @@ export default function Marketplace() {
                 onChanged={refetch}
                 highlight={lowestForSaleTokenId !== null && entry.tokenId === lowestForSaleTokenId}
                 isSubscribed={Boolean(subscriptions[entry.packageId])}
+                onSubscribeNeeded={(packageId) => {
+                  setSelectedSubscriptionPackage(packageId);
+                  setTimeout(() => {
+                    document.getElementById("subscription-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }, 0);
+                }}
               />
             ))}
           </div>

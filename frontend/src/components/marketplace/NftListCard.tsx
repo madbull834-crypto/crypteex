@@ -27,11 +27,13 @@ export function NftListCard({
   onChanged,
   highlight = false,
   isSubscribed = false,
+  onSubscribeNeeded,
 }: {
   entry: NftCatalogEntry;
   onChanged: () => void;
   highlight?: boolean;
   isSubscribed?: boolean;
+  onSubscribeNeeded?: (packageId: number) => void;
 }) {
   const { account, ecosystem, marketplace, usdt, usdtRead, connect } = useWeb3();
   const { user } = useUserPosition();
@@ -129,7 +131,7 @@ export function NftListCard({
           </button>
         ) : !isSubscribed ? (
           <button
-            onClick={() => document.getElementById("subscription-panel")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            onClick={() => onSubscribeNeeded?.(entry.packageId)}
             className="flex-1 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100"
           >
             Subscribe Now

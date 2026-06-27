@@ -5,7 +5,7 @@ import { useToast } from "../context/ToastContext";
 import { buildReferralLink, referralFromUrl } from "../utils/referral";
 import { shortenAddress } from "../utils/format";
 
-export function ReferralPanel() {
+export function ReferralPanel({ showIneligibleNotice = true }: { showIneligibleNotice?: boolean }) {
   const { account, connect, ecosystemRead } = useWeb3();
   const { push } = useToast();
   const [canRefer, setCanRefer] = useState(false);
@@ -54,7 +54,7 @@ export function ReferralPanel() {
         )}
       </div>
 
-      {account && !canRefer && (
+      {showIneligibleNotice && account && !canRefer && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           You cannot refer yet. Buy a category subscription and hold a Crypteex NFT, ask admin to whitelist your offline stake, or connect the admin wallet.
         </div>
